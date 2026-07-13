@@ -1,0 +1,126 @@
+<template>
+  <div class="collection-tab">
+    <el-tabs v-model="activeCategory" type="card">
+      <el-tab-pane label="权属证明" name="ownership" />
+      <el-tab-pane label="财务资料" name="financial" />
+      <el-tab-pane label="技术资料" name="technical" />
+      <el-tab-pane label="外部资料" name="external" />
+    </el-tabs>
+
+    <div style="margin:16px 0;display:flex;justify-content:space-between">
+      <el-descriptions :column="4" size="small">
+        <el-descriptions-item v-for="cat in categories" :key="cat.key" :label="cat.label">
+          <el-tag :type="getCategoryCount(cat.key) > 0 ? 'success' : 'info'" size="small">
+            {{ getCategoryCount(cat.key) }} 份
+          </el-tag>
+        </el-descriptions-item>
+      </el-descriptions>
+      <el-button type="primary" :icon="Upload" @click="showUploadDialog = true">上传资料</el-button>
+    </div>
+
+    <el-table :data="filteredDocs" stripe v-loading="loading">
+      <el-table-column label="文件名" prop="name" min-width="200">
+        <template #default="{ row }">
+          <el-icon style="margin-right:6px;color:#1677ff"><Document /></el-icon>
+          {{ row.name }}
+        </template>
+      </el-table-column>
+      <el-table-column label="类别" prop="category" width="110">
+        <template #default="{ row }">
+          <el-tag size="small" type="info">{{ categoryLabels[row.category] }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="大小" prop="size" width="90" />
+      <el-table-column label="上传人" prop="uploadedBy" width="100" />
+      <el-table-column label="上传时间" prop="uploadedAt" width="165" />
+      <el-table-column label="状态" width="100">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'verified' ? 'success' : 'warning'" size="small">
+            {{ row.status === 'verified' ? '已核验' : '待核验' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="140">
+        <template #default="{ row }">
+          <el-button link type="primary" size="small">预览</el-button>
+          <el-button link type="primary" size="small">下载</el-button>
+          <el-button link type="danger" size="small">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- Upload Dialog -->
+    <el-dialog v-model="showUploadDialog" title="上传资料" width="500px">
+      <el-form label-width="80px">
+        <el-form-item label="资料类别">
+          <el-select v-model="uploadForm.category">
+            <el-option v-for="cat in categories" :key="cat.key" :label="cat.label" :value="cat.key" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="文件">
+          <el-upload drag action="#" :auto-upload="false" multiple>
+            <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+            <div>拖拽文件到此处，或 <em>点击上传</em></div>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showUploadDialog = false">取消</el-button>
+        <el-button type="primary" @click="doUpload">上传</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Upload, Document, UploadFilled } from '@element-plus/icons-vue'
+import { documentApi } from '@/api/index.js'
+
+const route = useRoute()
+const docs = ref([])
+const loading = ref(false)
+const activeCategory = ref('ownership')
+const showUploadDialog = ref(false)
+const uploadForm = ref({ category: 'ownership' })
+
+const categories = [
+  { key: 'ownership', label: '权属证明' },
+  { key: 'financial', label: '财务资料' },
+  { key: 'technical', label: '技术资料' },
+  { key: 'external', label: '外部资料' },
+]
+
+const categoryLabels = { ownership: '权属证明', financial: '财务资料', technical: '技术资料', external: '外部资料' }
+
+const filteredDocs = computed(() => docs.value.filter(d => d.category === activeCategory.value))
+
+function getCategoryCount(cat) {
+  return docs.value.filter(d => d.category === cat).length
+}
+
+async function doUpload() {
+  await documentApi.upload(route.params.id, {
+    category: uploadForm.value.category,
+    name: '新上传文件.pdf',
+    size: '1.0MB',
+    uploadedBy: '当前用户',
+  })
+  showUploadDialog.value = false
+  ElMessage.success('上传成功')
+  const res = await documentApi.list(route.params.id)
+  docs.value = res.data
+}
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await documentApi.list(route.params.id)
+    docs.value = res.data
+  } finally {
+    loading.value = false
+  }
+})
+</script>
