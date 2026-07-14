@@ -221,6 +221,15 @@ export const mockUsers = [
   { id: '9', username: 'chen.ceo', name: '陈总', role: 'ceo', department: '总经理室', email: 'ceo@company.com', status: 'active' },
 ]
 
+export const mockRoles = [
+  { key: 'admin', label: '系统管理员', tagType: 'danger' },
+  { key: 'assessor', label: '评估专业人员', tagType: 'primary' },
+  { key: 'deptManager', label: '部门负责人', tagType: 'warning' },
+  { key: 'chiefEngineer', label: '总师室', tagType: 'warning' },
+  { key: 'ceo', label: '总经理', tagType: 'success' },
+  { key: 'riskControl', label: '风控', tagType: '' },
+]
+
 export const mockInventoryItems = [
   { id: '1', projectId: '1', assetNo: 'FA-2024-001', assetName: '数控机床', bookValue: 612000, fieldValue: 608000, diff: -4000, diffReason: '磨损略大', status: 'handled', handler: '张伟', handleTime: '2024-02-20' },
   { id: '2', projectId: '1', assetNo: 'FA-2024-002', assetName: '工业机器人', bookValue: 900000, fieldValue: 900000, diff: 0, diffReason: '', status: 'done', handler: '', handleTime: '' },

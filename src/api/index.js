@@ -1,4 +1,4 @@
-import { mockProjects, mockAssets, mockUsers, mockInventoryItems, mockDocuments, mockDashboard } from './mockData.js'
+import { mockProjects, mockAssets, mockUsers, mockRoles, mockInventoryItems, mockDocuments, mockDashboard } from './mockData.js'
 
 const delay = (ms = 300) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -259,11 +259,48 @@ export const userApi = {
     return { data: mockUsers, total: mockUsers.length }
   },
 
+  async create(payload) {
+    await delay(400)
+    const newUser = {
+      ...payload,
+      id: String(mockUsers.length + 1),
+      status: payload.status || 'active',
+    }
+    mockUsers.push(newUser)
+    return { data: newUser }
+  },
+
   async login(username, password) {
     await delay(600)
     const user = mockUsers.find(u => u.username === username)
     if (!user || password !== '123456') throw new Error('用户名或密码错误')
     return { data: { ...user, token: 'mock-token-' + user.id } }
+  },
+}
+
+// ── Roles ──────────────────────────────────────────────
+export const roleApi = {
+  async list() {
+    await delay()
+    return { data: [...mockRoles] }
+  },
+
+  async create(payload) {
+    await delay(400)
+    const newRole = {
+      ...payload,
+      key: payload.key || payload.label.toLowerCase().replace(/\s+/g, ''),
+    }
+    mockRoles.push(newRole)
+    return { data: newRole }
+  },
+
+  async remove(key) {
+    await delay(300)
+    const idx = mockRoles.findIndex(r => r.key === key)
+    if (idx === -1) throw new Error('角色不存在')
+    mockRoles.splice(idx, 1)
+    return { data: { key } }
   },
 }
 
