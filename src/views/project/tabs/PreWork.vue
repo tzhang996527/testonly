@@ -4,8 +4,8 @@
       <el-col :span="14">
         <el-card shadow="never" header="业务委托合同">
           <el-alert
-            v-if="preWorkApproved"
-            title="前期工作审批已全部通过，内容已锁定"
+            v-if="locked"
+            title="前期工作已锁定，内容不可修改"
             type="success"
             :closable="false"
             show-icon
@@ -13,25 +13,25 @@
           />
           <el-form label-width="120px">
             <el-form-item label="合同编号">
-              <el-input v-model="form.contractNo" placeholder="合同编号" :disabled="preWorkApproved" />
+              <el-input v-model="form.contractNo" placeholder="合同编号" :disabled="locked" />
             </el-form-item>
             <el-form-item label="委托单位">
-              <el-input v-model="form.clientName" placeholder="委托单位名称" :disabled="preWorkApproved" />
+              <el-input v-model="form.clientName" placeholder="委托单位名称" :disabled="locked" />
             </el-form-item>
             <el-form-item label="签订日期">
-              <el-date-picker v-model="form.signDate" type="date" value-format="YYYY-MM-DD" :disabled="preWorkApproved" />
+              <el-date-picker v-model="form.signDate" type="date" value-format="YYYY-MM-DD" :disabled="locked" />
             </el-form-item>
             <el-form-item label="合同金额">
-              <el-input-number v-model="form.amount" :precision="2" :min="0" :disabled="preWorkApproved" />
+              <el-input-number v-model="form.amount" :precision="2" :min="0" :disabled="locked" />
             </el-form-item>
             <el-form-item label="计划开始日期">
-              <el-date-picker v-model="form.planStart" type="date" value-format="YYYY-MM-DD" :disabled="preWorkApproved" />
+              <el-date-picker v-model="form.planStart" type="date" value-format="YYYY-MM-DD" :disabled="locked" />
             </el-form-item>
             <el-form-item label="计划完成日期">
-              <el-date-picker v-model="form.planEnd" type="date" value-format="YYYY-MM-DD" :disabled="preWorkApproved" />
+              <el-date-picker v-model="form.planEnd" type="date" value-format="YYYY-MM-DD" :disabled="locked" />
             </el-form-item>
             <el-form-item label="人员安排">
-              <el-select v-model="form.members" multiple placeholder="选择参与人员" :disabled="preWorkApproved">
+              <el-select v-model="form.members" multiple placeholder="选择参与人员" :disabled="locked">
                 <el-option label="张伟" value="张伟" />
                 <el-option label="李娜" value="李娜" />
                 <el-option label="王磊" value="王磊" />
@@ -41,7 +41,7 @@
         </el-card>
 
         <el-card shadow="never" header="ERP 状态确认" style="margin-top:16px">
-          <el-checkbox-group v-model="erpStatus" :disabled="preWorkApproved">
+          <el-checkbox-group v-model="erpStatus" :disabled="locked">
             <div class="erp-status-list">
               <el-checkbox label="contractSigned" value="contractSigned">合同已签</el-checkbox>
               <el-checkbox label="listLocked" value="listLocked">清单已锁定</el-checkbox>
@@ -50,7 +50,7 @@
           </el-checkbox-group>
         </el-card>
 
-        <el-card v-if="!preWorkApproved" shadow="never" header="审批流配置" style="margin-top:16px">
+        <el-card v-if="!locked" shadow="never" header="审批流配置" style="margin-top:16px">
           <ApprovalFlowConfig ref="flowConfigRef" v-model="approvalFlow" />
           <div style="margin-top:16px">
             <el-button type="primary" :loading="saving" @click="savePreWork">保存并发送审批</el-button>
@@ -77,8 +77,8 @@
                 </div>
               </template>
               <div v-else class="scratch-empty">
-                <el-upload action="#" :auto-upload="false" accept=".pdf,.docx,.xlsx" :disabled="preWorkApproved">
-                  <el-button size="small" :icon="Upload" :disabled="preWorkApproved">上传</el-button>
+                <el-upload action="#" :auto-upload="false" accept=".pdf,.docx,.xlsx" :disabled="locked">
+                  <el-button size="small" :icon="Upload" :disabled="locked">上传</el-button>
                 </el-upload>
               </div>
             </div>
@@ -111,10 +111,12 @@ const projectStore = useProjectStore()
 
 const project = computed(() => projectStore.current)
 
+const currentStep = computed(() => projectStore.current?.currentStep ?? 1)
 const preWorkApproved = computed(() =>
   project.value?.preWorkApprovals?.length > 0 &&
   project.value.preWorkApprovals.every(n => n.nodeStatus === 'approved')
 )
+const locked = computed(() => preWorkApproved.value || currentStep.value > 2)
 const flowConfigRef = ref()
 const saving = ref(false)
 const approvalFlow = ref([])

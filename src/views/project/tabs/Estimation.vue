@@ -3,9 +3,9 @@
     <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
       <span style="font-weight:600">评定估算明细表</span>
       <div>
-        <el-button type="primary" :icon="Plus" @click="showAddDialog = true">添加资产</el-button>
-        <el-button @click="autoCalc">系统自动计算</el-button>
-        <el-button type="success">生成评估明细表</el-button>
+        <el-button type="primary" :icon="Plus" :disabled="locked" @click="showAddDialog = true">添加资产</el-button>
+        <el-button :disabled="locked" @click="autoCalc">系统自动计算</el-button>
+        <el-button type="success" :disabled="locked">生成评估明细表</el-button>
       </div>
     </div>
 
@@ -82,6 +82,18 @@
         <el-button type="primary" @click="addAsset">确定</el-button>
       </template>
     </el-dialog>
+
+    <el-card shadow="never" style="margin-top:16px">
+      <template #header>ERP 状态确认</template>
+      <el-checkbox-group v-model="erpStatus" :disabled="locked">
+        <div class="erp-status-list">
+          <el-checkbox value="estimationDone">初步评估完成</el-checkbox>
+        </div>
+      </el-checkbox-group>
+      <div style="margin-top:16px">
+        <el-button type="primary" :loading="saving" :disabled="locked" @click="saveEstimation">保存</el-button>
+      </div>
+    </el-card>
   </div>
 </template>
 
@@ -92,12 +104,18 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { assetApi } from '@/api/index.js'
+import { useProjectStore } from '@/stores/project.js'
 
 const { t } = useI18n()
 const route = useRoute()
 const assets = ref([])
 const showAddDialog = ref(false)
+const saving = ref(false)
+const erpStatus = ref([])
 const addForm = ref({ assetNo: '', assetName: '', originalValue: 0, netValue: 0, assessedValue: 0, method: 'market' })
+
+const projectStore = useProjectStore()
+const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 5)
 
 const totalOriginal = computed(() => assets.value.reduce((s, a) => s + a.originalValue, 0))
 const totalNet = computed(() => assets.value.reduce((s, a) => s + a.netValue, 0))
@@ -115,6 +133,16 @@ async function addAsset() {
   assets.value = res.data
 }
 
+async function saveEstimation() {
+  saving.value = true
+  try {
+    await projectStore.saveEstimationInfo?.(route.params.id, { erpStatus: erpStatus.value })
+    ElMessage.success('初步评估信息已保存')
+  } finally {
+    saving.value = false
+  }
+}
+
 onMounted(async () => {
   const res = await assetApi.list({ projectId: route.params.id })
   assets.value = res.data
@@ -124,4 +152,5 @@ onMounted(async () => {
 <style scoped>
 .positive { color: #52c41a; font-weight: 600; }
 .negative { color: #ff4d4f; font-weight: 600; }
+.erp-status-list { display: flex; flex-direction: column; gap: 12px; }
 </style>

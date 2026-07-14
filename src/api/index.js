@@ -133,6 +133,50 @@ export const projectApi = {
     return { data: project }
   },
 
+  async saveReviewInfo(id, { approvalFlow, erpStatus }) {
+    await delay(400)
+    const project = mockProjects.find(p => p.id === id)
+    if (!project) throw new Error('Project not found')
+    project.reviewErpStatus = erpStatus
+    if (approvalFlow && approvalFlow.length) {
+      project.reviewApprovals = approvalFlow.map(node => ({
+        role: node.role,
+        nodeStatus: 'pending',
+        approvers: node.approvers.map(p => ({
+          name: p.name,
+          username: p.username,
+          status: 'pending',
+          comment: '',
+          time: '',
+        })),
+      }))
+    }
+    return { data: project }
+  },
+
+  async approveReview(id, approvalData) {
+    await delay(400)
+    const project = mockProjects.find(p => p.id === id)
+    if (!project) throw new Error('Project not found')
+    const node = (project.reviewApprovals || []).find(a => a.role === approvalData.role)
+    if (node) {
+      const person = node.approvers.find(a => a.username === approvalData.username)
+      if (person) {
+        person.status = approvalData.action
+        person.comment = approvalData.comment
+        person.time = new Date().toLocaleString('zh-CN')
+      }
+      if (node.approvers.some(a => a.status === 'approved')) {
+        node.nodeStatus = 'approved'
+      } else if (node.approvers.every(a => a.status === 'rejected')) {
+        node.nodeStatus = 'rejected'
+      } else {
+        node.nodeStatus = 'pending'
+      }
+    }
+    return { data: project }
+  },
+
   async advanceStep(id) {
     await delay(300)
     const project = mockProjects.find(p => p.id === id)

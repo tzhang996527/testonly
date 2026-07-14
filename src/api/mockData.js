@@ -10,7 +10,7 @@ export const mockProjects = [
     responsible: '张伟',
     department: '资产评估部',
     status: 'inProgress',
-    currentStep: 4,
+    currentStep: 3,
     createdAt: '2024-01-10 09:00:00',
     createdBy: '张伟',
     remark: '某科技公司股权转让，需对整体资产进行评估',

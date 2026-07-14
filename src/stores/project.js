@@ -69,6 +69,18 @@ export const useProjectStore = defineStore('project', {
       return res.data
     },
 
+    async saveReviewInfo(id, payload) {
+      const res = await projectApi.saveReviewInfo(id, payload)
+      if (this.current?.id === id) this.current = fresh(res.data)
+      return res.data
+    },
+
+    async approveReview(id, approvalData) {
+      const res = await projectApi.approveReview(id, approvalData)
+      if (this.current?.id === id) this.current = fresh(res.data)
+      return res.data
+    },
+
     async advanceStep(id) {
       const res = await projectApi.advanceStep(id)
       if (this.current?.id === id) this.current = fresh(res.data)

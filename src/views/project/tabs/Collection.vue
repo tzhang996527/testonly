@@ -15,7 +15,7 @@
           </el-tag>
         </el-descriptions-item>
       </el-descriptions>
-      <el-button type="primary" :icon="Upload" @click="showUploadDialog = true">上传资料</el-button>
+      <el-button type="primary" :icon="Upload" :disabled="locked" @click="showUploadDialog = true">上传资料</el-button>
     </div>
 
     <el-table :data="filteredDocs" stripe v-loading="loading">
@@ -44,7 +44,7 @@
         <template #default="{ row }">
           <el-button link type="primary" size="small">预览</el-button>
           <el-button link type="primary" size="small">下载</el-button>
-          <el-button link type="danger" size="small">删除</el-button>
+          <el-button link type="danger" size="small" :disabled="locked">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -69,6 +69,18 @@
         <el-button type="primary" @click="doUpload">上传</el-button>
       </template>
     </el-dialog>
+
+    <el-card shadow="never" style="margin-top:16px">
+      <template #header>ERP 状态确认</template>
+      <el-checkbox-group v-model="erpStatus" :disabled="locked">
+        <div class="erp-status-list">
+          <el-checkbox value="collectionDone">资料收集完成</el-checkbox>
+        </div>
+      </el-checkbox-group>
+      <div style="margin-top:16px">
+        <el-button type="primary" :loading="saving" :disabled="locked" @click="saveCollection">保存</el-button>
+      </div>
+    </el-card>
   </div>
 </template>
 
@@ -78,13 +90,19 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Upload, Document, UploadFilled } from '@element-plus/icons-vue'
 import { documentApi } from '@/api/index.js'
+import { useProjectStore } from '@/stores/project.js'
 
 const route = useRoute()
 const docs = ref([])
 const loading = ref(false)
+const saving = ref(false)
+const erpStatus = ref([])
 const activeCategory = ref('ownership')
 const showUploadDialog = ref(false)
 const uploadForm = ref({ category: 'ownership' })
+
+const projectStore = useProjectStore()
+const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 4)
 
 const categories = [
   { key: 'ownership', label: '权属证明' },
@@ -114,6 +132,16 @@ async function doUpload() {
   docs.value = res.data
 }
 
+async function saveCollection() {
+  saving.value = true
+  try {
+    await projectStore.saveCollectionInfo?.(route.params.id, { erpStatus: erpStatus.value })
+    ElMessage.success('资料收集信息已保存')
+  } finally {
+    saving.value = false
+  }
+}
+
 onMounted(async () => {
   loading.value = true
   try {
@@ -124,3 +152,7 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.erp-status-list { display: flex; flex-direction: column; gap: 12px; }
+</style>

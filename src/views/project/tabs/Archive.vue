@@ -29,13 +29,13 @@
       <el-col :span="8">
         <el-card shadow="never" header="报告生成">
           <div style="display:flex;flex-direction:column;gap:12px">
-            <el-button type="primary" block @click="generateReport">
+            <el-button type="primary" block :disabled="locked" @click="generateReport">
               <el-icon><Document /></el-icon> 生成评估报告
             </el-button>
-            <el-button type="default" block @click="ElMessage.info('正在生成...')">
+            <el-button type="default" block :disabled="locked" @click="ElMessage.info('正在生成...')">
               <el-icon><Printer /></el-icon> 打印评估报告
             </el-button>
-            <el-button type="success" block @click="doArchive">
+            <el-button type="success" block :disabled="locked" @click="doArchive">
               <el-icon><FolderAdd /></el-icon> 完成归档
             </el-button>
           </div>
@@ -58,9 +58,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Printer, FolderAdd } from '@element-plus/icons-vue'
+import { useProjectStore } from '@/stores/project.js'
+
+const projectStore = useProjectStore()
+const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 8)
 
 const archiveDocs = ref([
   { name: '评估立项单', type: '立项文件', archived: true },
