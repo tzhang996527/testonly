@@ -14,6 +14,17 @@ export const mockProjects = [
     createdAt: '2024-01-10 09:00:00',
     createdBy: '张伟',
     remark: '某科技公司股权转让，需对整体资产进行评估',
+    preWorkApprovals: [
+      { role: '部门负责人', nodeStatus: 'approved', approvers: [
+        { name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-01-15 10:00:00' },
+      ]},
+      { role: '办公室', nodeStatus: 'approved', approvers: [
+        { name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-01-16 09:30:00' },
+      ]},
+      { role: '总经理', nodeStatus: 'approved', approvers: [
+        { name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-01-17 15:00:00' },
+      ]},
+    ],
     approvals: [
       { role: '部门负责人', nodeStatus: 'approved', approvers: [
         { name: '李经理', username: 'li.manager', status: 'approved', comment: '同意立项', time: '2024-01-11 10:00:00' },
@@ -43,6 +54,17 @@ export const mockProjects = [
     createdAt: '2024-02-05 10:00:00',
     createdBy: '李娜',
     remark: '某制造企业固定资产抵押评估',
+    preWorkApprovals: [
+      { role: '部门负责人', nodeStatus: 'approved', approvers: [
+        { name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-02-08 10:00:00' },
+      ]},
+      { role: '办公室', nodeStatus: 'pending', approvers: [
+        { name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' },
+      ]},
+      { role: '总经理', nodeStatus: 'pending', approvers: [
+        { name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' },
+      ]},
+    ],
     approvals: [
       { role: '部门负责人', nodeStatus: 'approved', approvers: [
         { name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-02-06 10:00:00' },
@@ -71,6 +93,17 @@ export const mockProjects = [
     createdAt: '2024-03-20 14:00:00',
     createdBy: '王磊',
     remark: '知识产权处置评估',
+    preWorkApprovals: [
+      { role: '部门负责人', nodeStatus: 'pending', approvers: [
+        { name: '李经理', username: 'li.manager', status: 'pending', comment: '', time: '' },
+      ]},
+      { role: '办公室', nodeStatus: 'pending', approvers: [
+        { name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' },
+      ]},
+      { role: '总经理', nodeStatus: 'pending', approvers: [
+        { name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' },
+      ]},
+    ],
     approvals: [
       { role: '部门负责人', nodeStatus: 'pending', approvers: [
         { name: '李经理', username: 'li.manager', status: 'pending', comment: '', time: '' },
@@ -100,6 +133,17 @@ export const mockProjects = [
     createdAt: '2024-04-01 08:00:00',
     createdBy: '赵敏',
     remark: '存货清算评估项目',
+    preWorkApprovals: [
+      { role: '部门负责人', nodeStatus: 'approved', approvers: [
+        { name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-04-03 10:00:00' },
+      ]},
+      { role: '办公室', nodeStatus: 'approved', approvers: [
+        { name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-04-04 09:30:00' },
+      ]},
+      { role: '总经理', nodeStatus: 'approved', approvers: [
+        { name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-04-05 15:00:00' },
+      ]},
+    ],
     approvals: [
       { role: '部门负责人', nodeStatus: 'approved', approvers: [
         { name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-04-02 10:00:00' },
@@ -128,6 +172,17 @@ export const mockProjects = [
     createdAt: '2024-05-10 09:00:00',
     createdBy: '张伟',
     remark: '涉案固定资产司法鉴定',
+    preWorkApprovals: [
+      { role: '部门负责人', nodeStatus: 'approved', approvers: [
+        { name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-05-12 10:00:00' },
+      ]},
+      { role: '办公室', nodeStatus: 'approved', approvers: [
+        { name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-05-13 09:30:00' },
+      ]},
+      { role: '总经理', nodeStatus: 'approved', approvers: [
+        { name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-05-14 15:00:00' },
+      ]},
+    ],
     approvals: [
       { role: '部门负责人', nodeStatus: 'approved', approvers: [
         { name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-05-11 10:00:00' },

@@ -23,15 +23,12 @@
 
     <!-- Tab Navigation -->
     <el-tabs v-model="activeTab" @tab-click="handleTabClick" type="border-card">
-      <el-tab-pane label="项目概览" name="overview" />
-      <el-tab-pane label="前期工作" name="pre-work" />
-      <el-tab-pane label="清查盘点" name="inventory" />
-      <el-tab-pane label="资料收集" name="collection" />
-      <el-tab-pane label="评定估算" name="estimation" />
-      <el-tab-pane label="内部审核" name="review" />
-      <el-tab-pane label="结果确认" name="confirmation" />
-      <el-tab-pane label="报告归档" name="archive" />
-      <el-tab-pane label="后续跟踪" name="tracking" />
+      <el-tab-pane
+        v-for="tab in visibleTabs"
+        :key="tab.name"
+        :label="tab.label"
+        :name="tab.name"
+      />
     </el-tabs>
 
     <div class="tab-content">
@@ -46,6 +43,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
+import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/project.js'
 import StatusTag from '@/components/common/StatusTag.vue'
 import WorkflowProgress from '@/components/common/WorkflowProgress.vue'
@@ -55,10 +53,25 @@ const route = useRoute()
 const router = useRouter()
 const projectStore = useProjectStore()
 
-const project = computed(() => projectStore.current)
+const { current: project } = storeToRefs(projectStore)
 const advancing = ref(false)
 
-const tabRouteMap = ['overview', 'pre-work', 'inventory', 'collection', 'estimation', 'review', 'confirmation', 'archive', 'tracking']
+// tab[i] requires currentStep >= i; overview (i=0) is always visible
+const allTabs = [
+  { label: '项目概览', name: 'overview' },
+  { label: '前期工作', name: 'pre-work' },
+  { label: '清查盘点', name: 'inventory' },
+  { label: '资料收集', name: 'collection' },
+  { label: '评定估算', name: 'estimation' },
+  { label: '内部审核', name: 'review' },
+  { label: '结果确认', name: 'confirmation' },
+  { label: '报告归档', name: 'archive' },
+  { label: '后续跟踪', name: 'tracking' },
+]
+const visibleTabs = computed(() =>
+  allTabs.filter((_, i) => (project.value?.currentStep || 1) > i)
+)
+const tabRouteMap = allTabs.map(t => t.name)
 const activeTab = ref(route.path.split('/').at(-1) || 'overview')
 
 watch(() => route.path, (p) => {
@@ -115,8 +128,10 @@ async function handleAdvance() {
 
   advancing.value = true
   try {
-    await projectStore.advanceStep(route.params.id)
+    const updated = await projectStore.advanceStep(route.params.id)
     ElMessage.success('流程已推进')
+    const nextTab = allTabs[updated.currentStep - 1]?.name
+    if (nextTab) router.push(`/project/${route.params.id}/${nextTab}`)
   } finally {
     advancing.value = false
   }
