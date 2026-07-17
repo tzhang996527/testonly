@@ -25,7 +25,7 @@ BACKEND_PID=$!
 
 # Wait for backend to be ready
 for i in $(seq 1 10); do
-  if curl -sf http://localhost:3001/api/dashboard > /dev/null 2>&1; then
+  if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
     echo "✅ Backend ready  → http://localhost:3001"
     break
   fi

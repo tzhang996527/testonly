@@ -116,6 +116,7 @@ import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { assetApi } from '@/api/index.js'
 import { useProjectStore } from '@/stores/project.js'
+import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 
 const { t } = useI18n()
 const route = useRoute()

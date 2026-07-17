@@ -1,7 +1,9 @@
 import { Router } from 'express'
+import jwt from 'jsonwebtoken'
 import { db } from '../db/index.js'
 import { users } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
+import { JWT_SECRET, authMiddleware } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -33,11 +35,16 @@ router.post('/login', async (req, res) => {
   if (!user || (user.password || '123456') !== password) {
     return res.status(401).json({ message: '用户名或密码错误' })
   }
+  const token = jwt.sign(
+    { id: user.id, username: user.username, name: user.name, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '8h' }
+  )
   const { password: _, ...safeUser } = user
-  res.json({ data: { ...safeUser, token: 'mock-token-' + user.id } })
+  res.json({ data: { ...safeUser, token } })
 })
 
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', authMiddleware, async (req, res) => {
   const [existing] = await db.select().from(users).where(eq(users.id, req.params.id))
   if (!existing) return res.status(404).json({ message: '用户不存在' })
   const { password: _pw, ...allowed } = req.body
@@ -49,7 +56,7 @@ router.patch('/:id', async (req, res) => {
   res.json({ data: updated })
 })
 
-router.post('/:id/reset-password', async (req, res) => {
+router.post('/:id/reset-password', authMiddleware, async (req, res) => {
   const [existing] = await db.select().from(users).where(eq(users.id, req.params.id))
   if (!existing) return res.status(404).json({ message: '用户不存在' })
   const newPassword = req.body.password || '123456'

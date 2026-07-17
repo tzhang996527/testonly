@@ -116,7 +116,6 @@ import { Plus, Document, Paperclip, Upload } from '@element-plus/icons-vue'
 import { inventoryApi } from '@/api/index.js'
 import { useProjectStore } from '@/stores/project.js'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
-import { useProjectStore } from '@/stores/project.js'
 
 const { t } = useI18n()
 const route = useRoute()

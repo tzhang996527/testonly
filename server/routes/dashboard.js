@@ -18,8 +18,7 @@ const STAGE_LABELS = {
 }
 
 router.get('/', async (req, res) => {
-  // current user from header (set by frontend auth store)
-  const currentUsername = req.headers['x-username'] || ''
+  const currentUsername = req.user?.username || ''
 
   const rows = await db.select().from(projects)
   const stats = {
@@ -36,30 +35,47 @@ router.get('/', async (req, res) => {
     { status: 'archived',   count: rows.filter(p => p.status === 'archived').length,   label: '已归档' },
   ]
 
-  // myTasks: find all approval_nodes where current user has a pending action
+  // myTasks: find nodes where it's this user's turn (all prior nodes in stage must be approved)
   let myTasks = []
   if (currentUsername) {
     const allNodes = await db.select().from(approvalNodes)
     const projectMap = Object.fromEntries(rows.map(p => [p.id, p]))
 
+    // group by projectId+stage, sorted by nodeIndex
+    const groups = {}
     for (const node of allNodes) {
-      if (node.nodeStatus !== 'pending') continue
-      const approvers = JSON.parse(node.approvers || '[]')
-      const isPending = approvers.some(a => a.username === currentUsername && a.status === 'pending')
-      if (!isPending) continue
+      const key = `${node.projectId}::${node.stage}`
+      if (!groups[key]) groups[key] = []
+      groups[key].push(node)
+    }
+    for (const nodes of Object.values(groups)) {
+      nodes.sort((a, b) => a.nodeIndex - b.nodeIndex)
+      // find the first node that isn't approved yet
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]
+        // all previous nodes must be approved
+        const prevAllApproved = nodes.slice(0, i).every(n => n.nodeStatus === 'approved')
+        if (!prevAllApproved) break
+        if (node.nodeStatus === 'approved' || node.nodeStatus === 'rejected') continue
 
-      const project = projectMap[node.projectId]
-      if (!project) continue
-      myTasks.push({
-        id:        `${node.projectId}-${node.stage}-${node.nodeIndex}`,
-        projectId: node.projectId,
-        projectNo: project.projectNo,
-        title:     `【${STAGE_LABELS[node.stage] || node.stage}】${project.purpose} — ${node.role}审批`,
-        type:      'approval',
-        stage:     node.stage,
-        priority:  'high',
-        dueDate:   project.baseDate || '',
-      })
+        const approvers = JSON.parse(node.approvers || '[]')
+        const isPending = approvers.some(a => a.username === currentUsername && a.status === 'pending')
+        if (!isPending) break // not this user's node — stop looking further
+
+        const project = projectMap[node.projectId]
+        if (!project) break
+        myTasks.push({
+          id:        `${node.projectId}-${node.stage}-${node.nodeIndex}`,
+          projectId: node.projectId,
+          projectNo: project.projectNo,
+          title:     `【${STAGE_LABELS[node.stage] || node.stage}】${project.purpose} — ${node.role}审批`,
+          type:      'approval',
+          stage:     node.stage,
+          priority:  'high',
+          dueDate:   project.baseDate || '',
+        })
+        break // only surface the first actionable node per stage per project
+      }
     }
   }
 

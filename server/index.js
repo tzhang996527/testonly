@@ -9,6 +9,7 @@ import documentsRouter  from './routes/documents.js'
 import usersRouter      from './routes/users.js'
 import dashboardRouter  from './routes/dashboard.js'
 import approvalsRouter  from './routes/approvals.js'
+import { authMiddleware } from './middleware/auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -20,11 +21,16 @@ app.use(express.json())
 // serve uploaded files as static assets
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
+// public routes (no auth required)
+app.get('/api/health', (req, res) => res.json({ ok: true }))
+app.use('/api/users', usersRouter)
+
+// all other routes require a valid JWT
+app.use(authMiddleware)
 app.use('/api/projects',  projectsRouter)
 app.use('/api/assets',    assetsRouter)
 app.use('/api/inventory', inventoryRouter)
 app.use('/api/documents', documentsRouter)
-app.use('/api/users',     usersRouter)
 app.use('/api/dashboard', dashboardRouter)
 app.use('/api/approvals', approvalsRouter)
 

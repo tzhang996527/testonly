@@ -38,8 +38,8 @@
             </el-table-column>
             <el-table-column label="截止日期" prop="dueDate" width="110" />
             <el-table-column label="操作" width="80">
-              <template #default>
-                <el-button link type="primary" size="small">处理</el-button>
+              <template #default="{ row }">
+                <el-button link type="primary" size="small" @click="handleTask(row)">处理</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -90,8 +90,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { dashboardApi } from '@/api/index.js'
 import { Folder, Clock, Check, TrendCharts } from '@element-plus/icons-vue'
+
+const router = useRouter()
 
 const dashboard = ref(null)
 
@@ -124,6 +127,24 @@ onMounted(async () => {
   const res = await dashboardApi.get()
   dashboard.value = res.data
 })
+
+// stage name → tab route name (matches router config)
+const STAGE_TAB = {
+  overview:     'overview',
+  'pre-work':   'pre-work',
+  inventory:    'inventory',
+  collection:   'collection',
+  estimation:   'estimation',
+  review:       'review',
+  confirmation: 'confirmation',
+  archive:      'archive',
+  tracking:     'tracking',
+}
+
+function handleTask(row) {
+  const tab = STAGE_TAB[row.stage] || row.stage
+  router.push(`/project/${row.projectId}/${tab}`)
+}
 </script>
 
 <style scoped>

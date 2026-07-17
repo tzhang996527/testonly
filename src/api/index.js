@@ -3,14 +3,25 @@ import { mockRoles } from '@/api/mockData.js'
 
 const http = axios.create({ baseURL: '/api' })
 
-// attach current user to every request so dashboard myTasks works
+// attach JWT token to every request
 http.interceptors.request.use(config => {
-  try {
-    const auth = JSON.parse(localStorage.getItem('erp-auth') || '{}')
-    if (auth?.user?.username) config.headers['x-username'] = auth.user.username
-  } catch {}
+  const token = localStorage.getItem('token')
+  if (token) config.headers['Authorization'] = `Bearer ${token}`
   return config
 })
+
+// redirect to login on 401
+http.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    }
+    return Promise.reject(err)
+  }
+)
 
 function delay(ms = 300) { return new Promise(r => setTimeout(r, ms)) }
 
