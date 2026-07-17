@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import multer from 'multer'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { db } from '../db/index.js'
 import { documents, projects } from '../db/schema.js'
@@ -14,8 +15,18 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     // multer receives filename bytes as latin1; re-encode to utf8
     file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8')
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e6)
-    cb(null, unique + path.extname(file.originalname))
+    const ext = path.extname(file.originalname)
+    const base = path.basename(file.originalname, ext).replace(/[\\/:*?"<>|]/g, '_')
+    const now = new Date()
+    const ts = now.getFullYear().toString()
+      + String(now.getMonth() + 1).padStart(2, '0')
+      + String(now.getDate()).padStart(2, '0')
+      + '_'
+      + String(now.getHours()).padStart(2, '0')
+      + String(now.getMinutes()).padStart(2, '0')
+      + String(now.getSeconds()).padStart(2, '0')
+      + String(now.getMilliseconds()).padStart(3, '0')
+    cb(null, `${base}-${ts}${ext}`)
   },
 })
 
@@ -93,6 +104,10 @@ router.delete('/:id', async (req, res) => {
         .set({ attachments: JSON.stringify(attachments) })
         .where(eq(projects.id, doc.projectId))
     }
+  }
+  if (doc?.storedName) {
+    const filePath = path.join(UPLOADS_DIR, doc.storedName)
+    fs.unlink(filePath, () => {})
   }
   await db.delete(documents).where(eq(documents.id, req.params.id))
   res.json({ success: true })

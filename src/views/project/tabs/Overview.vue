@@ -75,7 +75,7 @@
                 <el-icon><Document /></el-icon>
                 {{ doc.label }}
               </div>
-              <template v-if="scratchFiles(doc.key).length">
+              <template v-if="!editing && scratchFiles(doc.key).length">
                 <div
                   v-for="(file, idx) in scratchFiles(doc.key)"
                   :key="idx"
@@ -89,11 +89,13 @@
               </template>
               <div v-if="editing" style="margin-top:6px;padding-left:20px">
                 <el-upload
+                  v-model:file-list="attachments[doc.key]"
                   action="#"
                   :auto-upload="false"
+                  :limit="3"
                   accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.png"
-                  :show-file-list="false"
-                  :on-change="(f) => handleScratchUpload(doc.key, f)"
+                  :on-exceed="() => ElMessage.warning('最多上传3个文件')"
+                  :on-remove="(file) => markForDelete(file)"
                 >
                   <el-button size="small" :icon="Upload">上传文件</el-button>
                 </el-upload>
@@ -133,13 +135,20 @@ const project = computed(() => projectStore.current)
 const isDraft = computed(() => project.value?.status === 'draft')
 const editing = ref(false)
 const saving = ref(false)
+const pendingDeletes = ref([]) // document ids to delete on save
+
+const attachments = reactive({
+  basicInfo: [],
+  independence: [],
+  riskAssessment: [],
+})
 
 const editForm = reactive({
   purpose: '', baseDate: '', assetCategory: '',
   responsible: '', department: '', remark: '',
 })
 
-function startEdit() {
+async function startEdit() {
   const p = project.value
   editForm.purpose      = p.purpose      || ''
   editForm.baseDate     = p.baseDate     || ''
@@ -147,22 +156,60 @@ function startEdit() {
   editForm.responsible  = p.responsible  || ''
   editForm.department   = p.department   || ''
   editForm.remark       = p.remark       || ''
+  pendingDeletes.value  = []
+
+  // Load existing files into upload lists so el-upload can show and remove them
+  const { data: docs } = await documentApi.list(route.params.id)
+  for (const key of Object.keys(attachments)) attachments[key] = []
+  for (const doc of docs) {
+    if (attachments[doc.category] !== undefined) {
+      attachments[doc.category].push({
+        uid: doc.id,
+        name: doc.name,
+        size: doc.size,
+        status: 'success',
+        _docId: doc.id,
+      })
+    }
+  }
   editing.value = true
 }
 
 function cancelEdit() {
   editing.value = false
+  pendingDeletes.value = []
+  attachments.basicInfo = []
+  attachments.independence = []
+  attachments.riskAssessment = []
 }
 
 async function saveEdit() {
   saving.value = true
   try {
     await projectStore.update(route.params.id, { ...editForm })
+    // delete files marked for removal
+    if (pendingDeletes.value.length) {
+      await Promise.all(pendingDeletes.value.map(id => documentApi.remove(id)))
+      pendingDeletes.value = []
+    }
+    // upload new files
+    const uploads = []
+    for (const doc of scratchDocTypes) {
+      for (const item of attachments[doc.key]) {
+        if (item.raw) uploads.push(documentApi.upload(route.params.id, item.raw, doc.key))
+      }
+    }
+    if (uploads.length) await Promise.all(uploads)
+    await projectStore.fetchOne(route.params.id)
     editing.value = false
     ElMessage.success('已保存')
   } finally {
     saving.value = false
   }
+}
+
+function markForDelete(file) {
+  if (file._docId) pendingDeletes.value.push(file._docId)
 }
 
 const scratchDocTypes = [
@@ -181,17 +228,6 @@ function scratchFiles(key) {
       ? (typeof f.size === 'number' ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : f.size)
       : '',
   }))
-}
-
-async function handleScratchUpload(category, fileItem) {
-  if (!fileItem?.raw) return
-  try {
-    await documentApi.upload(route.params.id, fileItem.raw, category)
-    await projectStore.fetchOne(route.params.id)
-    ElMessage.success('上传成功')
-  } catch {
-    ElMessage.error('上传失败')
-  }
 }
 
 function downloadFile(file) {
