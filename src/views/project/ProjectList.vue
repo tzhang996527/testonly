@@ -59,10 +59,10 @@
           </template>
         </el-table-column>
         <el-table-column :label="t('common.createdAt')" prop="createdAt" width="160" />
-        <el-table-column :label="t('common.operation')" width="140" fixed="right">
+        <el-table-column :label="t('common.operation')" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="$router.push(`/project/${row.id}`)">{{ t('common.view') }}</el-button>
             <el-button link type="primary" @click="$router.push(`/project/${row.id}/overview`)">详情</el-button>
+            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -83,6 +83,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
 import StatusTag from '@/components/common/StatusTag.vue'
@@ -103,6 +104,17 @@ function resetFilters() {
   filters.status = ''
   filters.keyword = ''
   fetchData()
+}
+
+async function handleDelete(row) {
+  await ElMessageBox.confirm(`确认删除项目 ${row.projectNo}？此操作不可恢复。`, '删除确认', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning',
+    confirmButtonClass: 'el-button--danger',
+  })
+  await projectStore.remove(row.id)
+  ElMessage.success('项目已删除')
 }
 
 onMounted(fetchData)

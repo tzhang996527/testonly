@@ -17,18 +17,19 @@
                 >
                   <el-icon style="color:#1677ff"><Paperclip /></el-icon>
                   <span class="file-name">{{ file.name }}</span>
-                  <el-button link type="primary" size="small">下载</el-button>
+                  <el-button link type="primary" size="small" @click="downloadFile(file)">下载</el-button>
                   <el-button v-if="!locked" link type="danger" size="small" @click="attachments[doc.key].splice(idx, 1)">删除</el-button>
                 </div>
               </template>
               <div v-else class="scratch-empty">
                 <el-upload
-                  v-model:file-list="attachments[doc.key]"
                   action="#"
                   :auto-upload="false"
                   :limit="3"
                   accept=".pdf,.doc,.docx,.xlsx,.xls"
                   :disabled="locked"
+                  :on-change="(f) => handleScratchUpload(doc.key, f)"
+                  :show-file-list="false"
                   :on-exceed="() => ElMessage.warning('最多上传3个文件')"
                 >
                   <el-button size="small" :icon="Upload" :disabled="locked">上传</el-button>
@@ -74,6 +75,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Document, Paperclip, Upload } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
+import { documentApi } from '@/api/index.js'
 import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 
@@ -124,6 +126,25 @@ async function saveReview() {
 async function handleApprove(payload) {
   await projectStore.approveReview(route.params.id, payload)
   ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
+}
+
+async function handleScratchUpload(category, fileItem) {
+  if (!fileItem?.raw) return
+  try {
+    const res = await documentApi.upload(route.params.id, fileItem.raw, category)
+    attachments[category].push(res.data)
+    ElMessage.success('上传成功')
+  } catch {
+    ElMessage.error('上传失败')
+  }
+}
+
+function downloadFile(file) {
+  if (!file.storedName) return ElMessage.warning('该文件暂无下载')
+  const a = document.createElement('a')
+  a.href = documentApi.fileUrl(file.storedName)
+  a.download = file.name
+  a.click()
 }
 </script>
 

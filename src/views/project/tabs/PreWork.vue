@@ -73,11 +73,18 @@
                   <el-icon style="color:#1677ff"><Paperclip /></el-icon>
                   <span class="file-name">{{ file.name }}</span>
                   <span class="file-size">{{ file.size }}</span>
-                  <el-button link type="primary" size="small">下载</el-button>
+                  <el-button link type="primary" size="small" @click="downloadFile(file)">下载</el-button>
                 </div>
               </template>
               <div v-else class="scratch-empty">
-                <el-upload action="#" :auto-upload="false" accept=".pdf,.docx,.xlsx" :disabled="locked">
+                <el-upload
+                  action="#"
+                  :auto-upload="false"
+                  accept=".pdf,.docx,.xlsx"
+                  :disabled="locked"
+                  :on-change="(f) => handleScratchUpload(doc.key, f)"
+                  :show-file-list="false"
+                >
                   <el-button size="small" :icon="Upload" :disabled="locked">上传</el-button>
                 </el-upload>
               </div>
@@ -103,6 +110,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Document, Paperclip, Upload } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
+import { documentApi } from '@/api/index.js'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
 
@@ -143,6 +151,7 @@ function scratchFiles(key) {
   if (!files?.length) return []
   return files.map(f => ({
     name: f.name,
+    storedName: f.storedName,
     size: f.size
       ? (typeof f.size === 'number' ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : f.size)
       : '',
@@ -152,6 +161,25 @@ function scratchFiles(key) {
 async function handleApprove(payload) {
   await projectStore.approvePreWork(route.params.id, payload)
   ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
+}
+
+async function handleScratchUpload(category, fileItem) {
+  if (!fileItem?.raw) return
+  try {
+    await documentApi.upload(route.params.id, fileItem.raw, category)
+    await projectStore.fetchOne(route.params.id)
+    ElMessage.success('上传成功')
+  } catch {
+    ElMessage.error('上传失败')
+  }
+}
+
+function downloadFile(file) {
+  if (!file.storedName) return ElMessage.warning('该文件暂无下载')
+  const a = document.createElement('a')
+  a.href = documentApi.fileUrl(file.storedName)
+  a.download = file.name
+  a.click()
 }
 
 async function savePreWork() {

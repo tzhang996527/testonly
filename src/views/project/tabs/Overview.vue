@@ -2,8 +2,24 @@
   <div class="overview-tab">
     <el-row :gutter="20">
       <el-col :span="14">
-        <el-card shadow="never" header="基本信息">
-          <el-descriptions :column="2" border>
+        <el-card shadow="never">
+          <template #header>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span>基本信息</span>
+              <div v-if="isDraft">
+                <template v-if="!editing">
+                  <el-button size="small" type="primary" :icon="Edit" @click="startEdit">编辑</el-button>
+                </template>
+                <template v-else>
+                  <el-button size="small" :loading="saving" type="primary" @click="saveEdit">保存</el-button>
+                  <el-button size="small" @click="cancelEdit">取消</el-button>
+                </template>
+              </div>
+            </div>
+          </template>
+
+          <!-- view mode -->
+          <el-descriptions v-if="!editing" :column="2" border>
             <el-descriptions-item :label="t('project.projectNo')">{{ project?.projectNo }}</el-descriptions-item>
             <el-descriptions-item :label="t('project.purpose')">{{ project?.purpose }}</el-descriptions-item>
             <el-descriptions-item :label="t('project.baseDate')">{{ project?.baseDate }}</el-descriptions-item>
@@ -18,6 +34,38 @@
             <el-descriptions-item :label="t('common.createdAt')">{{ project?.createdAt }}</el-descriptions-item>
             <el-descriptions-item :label="t('common.remark')" :span="2">{{ project?.remark }}</el-descriptions-item>
           </el-descriptions>
+
+          <!-- edit mode -->
+          <el-form v-else :model="editForm" label-width="110px">
+            <el-form-item :label="t('project.purpose')">
+              <el-input v-model="editForm.purpose" />
+            </el-form-item>
+            <el-form-item :label="t('project.baseDate')">
+              <el-date-picker v-model="editForm.baseDate" type="date" value-format="YYYY-MM-DD" />
+            </el-form-item>
+            <el-form-item :label="t('project.assetCategory')">
+              <el-select v-model="editForm.assetCategory">
+                <el-option :label="t('project.assetCategories.fixed')"      value="fixed" />
+                <el-option :label="t('project.assetCategories.intangible')" value="intangible" />
+                <el-option :label="t('project.assetCategories.inventory')"  value="inventory" />
+                <el-option :label="t('project.assetCategories.whole')"      value="whole" />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="t('project.responsible')">
+              <el-select v-model="editForm.responsible">
+                <el-option label="张伟" value="张伟" />
+                <el-option label="李娜" value="李娜" />
+                <el-option label="王磊" value="王磊" />
+                <el-option label="赵敏" value="赵敏" />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="t('project.department')">
+              <el-input v-model="editForm.department" />
+            </el-form-item>
+            <el-form-item :label="t('common.remark')">
+              <el-input v-model="editForm.remark" type="textarea" :rows="3" />
+            </el-form-item>
+          </el-form>
         </el-card>
 
         <el-card shadow="never" header="底稿" style="margin-top:16px">
@@ -36,14 +84,26 @@
                   <el-icon style="color:#1677ff"><Paperclip /></el-icon>
                   <span class="file-name">{{ file.name }}</span>
                   <span class="file-size">{{ file.size }}</span>
-                  <el-button link type="primary" size="small">下载</el-button>
+                  <el-button link type="primary" size="small" @click="downloadFile(file)">下载</el-button>
                 </div>
               </template>
-              <div v-else class="scratch-empty">未上传</div>
+              <div v-if="editing" style="margin-top:6px;padding-left:20px">
+                <el-upload
+                  action="#"
+                  :auto-upload="false"
+                  accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.png"
+                  :show-file-list="false"
+                  :on-change="(f) => handleScratchUpload(doc.key, f)"
+                >
+                  <el-button size="small" :icon="Upload">上传文件</el-button>
+                </el-upload>
+              </div>
+              <div v-else-if="!scratchFiles(doc.key).length" class="scratch-empty">未上传</div>
             </div>
           </div>
         </el-card>
       </el-col>
+
       <el-col :span="10">
         <ApprovalFlowCard
           :approvals="project?.approvals || []"
@@ -55,12 +115,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Document, Paperclip } from '@element-plus/icons-vue'
+import { Document, Paperclip, Edit, Upload } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
+import { documentApi } from '@/api/index.js'
 import StatusTag from '@/components/common/StatusTag.vue'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 
@@ -69,6 +130,40 @@ const route = useRoute()
 const projectStore = useProjectStore()
 
 const project = computed(() => projectStore.current)
+const isDraft = computed(() => project.value?.status === 'draft')
+const editing = ref(false)
+const saving = ref(false)
+
+const editForm = reactive({
+  purpose: '', baseDate: '', assetCategory: '',
+  responsible: '', department: '', remark: '',
+})
+
+function startEdit() {
+  const p = project.value
+  editForm.purpose      = p.purpose      || ''
+  editForm.baseDate     = p.baseDate     || ''
+  editForm.assetCategory= p.assetCategory|| ''
+  editForm.responsible  = p.responsible  || ''
+  editForm.department   = p.department   || ''
+  editForm.remark       = p.remark       || ''
+  editing.value = true
+}
+
+function cancelEdit() {
+  editing.value = false
+}
+
+async function saveEdit() {
+  saving.value = true
+  try {
+    await projectStore.update(route.params.id, { ...editForm })
+    editing.value = false
+    ElMessage.success('已保存')
+  } finally {
+    saving.value = false
+  }
+}
 
 const scratchDocTypes = [
   { key: 'basicInfo',      label: '基本情况表' },
@@ -78,13 +173,33 @@ const scratchDocTypes = [
 
 function scratchFiles(key) {
   const files = project.value?.attachments?.[key]
-  if (!files || !files.length) return []
+  if (!files?.length) return []
   return files.map(f => ({
     name: f.name,
+    storedName: f.storedName,
     size: f.size
       ? (typeof f.size === 'number' ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : f.size)
       : '',
   }))
+}
+
+async function handleScratchUpload(category, fileItem) {
+  if (!fileItem?.raw) return
+  try {
+    await documentApi.upload(route.params.id, fileItem.raw, category)
+    await projectStore.fetchOne(route.params.id)
+    ElMessage.success('上传成功')
+  } catch {
+    ElMessage.error('上传失败')
+  }
+}
+
+function downloadFile(file) {
+  if (!file.storedName) return ElMessage.warning('该文件暂无下载')
+  const a = document.createElement('a')
+  a.href = documentApi.fileUrl(file.storedName)
+  a.download = file.name
+  a.click()
 }
 
 async function handleApprove(payload) {
@@ -120,8 +235,6 @@ async function handleApprove(payload) {
 }
 
 .file-name { flex: 1; font-size: 13px; color: #595959; }
-
 .file-size { font-size: 12px; color: #bfbfbf; }
-
 .scratch-empty { padding-left: 20px; font-size: 13px; color: #bfbfbf; }
 </style>

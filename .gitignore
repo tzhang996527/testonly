@@ -33,3 +33,9 @@ Thumbs.db
 # Cache
 .cache/
 .vite/
+
+uploads/
+
+erp.db
+erp.db-shm
+erp.db-wal

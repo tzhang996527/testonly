@@ -51,6 +51,12 @@ export const useProjectStore = defineStore('project', {
       return res.data
     },
 
+    async remove(id) {
+      await projectApi.remove(id)
+      this.list = this.list.filter(p => p.id !== id)
+      if (this.current?.id === id) this.current = null
+    },
+
     async approve(id, approvalData) {
       const res = await projectApi.approve(id, approvalData)
       if (this.current?.id === id) this.current = fresh(res.data)

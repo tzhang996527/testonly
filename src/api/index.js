@@ -1,255 +1,56 @@
-import { mockProjects, mockAssets, mockUsers, mockRoles, mockInventoryItems, mockDocuments, mockDashboard } from './mockData.js'
+import axios from 'axios'
 
-const delay = (ms = 300) => new Promise(resolve => setTimeout(resolve, ms))
+const http = axios.create({ baseURL: '/api' })
 
 // ── Projects ──────────────────────────────────────────────
 export const projectApi = {
-  async list(params = {}) {
-    await delay()
-    let data = [...mockProjects]
-    if (params.status) data = data.filter(p => p.status === params.status)
-    if (params.keyword) data = data.filter(p =>
-      p.projectNo.includes(params.keyword) || p.purpose.includes(params.keyword)
-    )
-    return { data, total: data.length }
-  },
+  list: (params = {})       => http.get('/projects', { params }).then(r => r.data),
+  get:  (id)                => http.get(`/projects/${id}`).then(r => r.data),
+  create: (payload)         => http.post('/projects', payload).then(r => r.data),
+  update: (id, payload)     => http.patch(`/projects/${id}`, payload).then(r => r.data),
+  remove: (id)              => http.delete(`/projects/${id}`).then(r => r.data),
 
-  async get(id) {
-    await delay()
-    const item = mockProjects.find(p => p.id === id)
-    if (!item) throw new Error('Project not found')
-    return { data: item }
-  },
-
-  async create(payload) {
-    await delay(500)
-    // payload.approvalFlow = [{ role, approvers: [{name, username}] }]
-    const defaultFlow = [
-      { role: '部门负责人', approvers: [{ name: '李经理', username: 'li.manager' }] },
-      { role: '风控',       approvers: [{ name: '王风控', username: 'wang.riskctrl' }] },
-      { role: '办公室',     approvers: [{ name: '办公室主任', username: 'office.chief' }] },
-      { role: '总经理',     approvers: [{ name: '陈总', username: 'chen.ceo' }] },
-    ]
-    const flowDef = payload.approvalFlow || defaultFlow
-    const newProject = {
-      ...payload,
-      id: String(mockProjects.length + 1),
-      projectNo: `PJ-${new Date().getFullYear()}-${String(mockProjects.length + 1).padStart(4, '0')}`,
-      status: 'draft',
-      currentStep: 1,
-      createdAt: new Date().toLocaleString('zh-CN'),
-      approvals: flowDef.map(node => ({
-        role: node.role,
-        nodeStatus: 'pending',
-        approvers: node.approvers.map(p => ({
-          name: p.name,
-          username: p.username,
-          status: 'pending',
-          comment: '',
-          time: '',
-        })),
-      })),
-    }
-    mockProjects.push(newProject)
-    return { data: newProject }
-  },
-
-  async update(id, payload) {
-    await delay(400)
-    const idx = mockProjects.findIndex(p => p.id === id)
-    if (idx === -1) throw new Error('Project not found')
-    Object.assign(mockProjects[idx], payload)
-    return { data: mockProjects[idx] }
-  },
-
-  async approve(id, approvalData) {
-    await delay(400)
-    const project = mockProjects.find(p => p.id === id)
-    if (!project) throw new Error('Project not found')
-    const node = project.approvals.find(a => a.role === approvalData.role)
-    if (node) {
-      // 按 username 找到当前审批人并更新其状态
-      const person = node.approvers.find(a => a.username === approvalData.username)
-      if (person) {
-        person.status = approvalData.action
-        person.comment = approvalData.comment
-        person.time = new Date().toLocaleString('zh-CN')
-      }
-      // 任意一人通过 → 节点通过；所有人都驳回 → 节点驳回
-      if (node.approvers.some(a => a.status === 'approved')) {
-        node.nodeStatus = 'approved'
-      } else if (node.approvers.every(a => a.status === 'rejected')) {
-        node.nodeStatus = 'rejected'
-      } else {
-        node.nodeStatus = 'pending'
-      }
-    }
-    const allApproved = project.approvals.every(a => a.nodeStatus === 'approved')
-    if (allApproved) project.status = 'approved'
-    return { data: project }
-  },
-
-  async savePreWorkInfo(id, { form, approvalFlow }) {
-    await delay(400)
-    const project = mockProjects.find(p => p.id === id)
-    if (!project) throw new Error('Project not found')
-    // 保存表单数据
-    project.preWorkData = { ...form }
-    // 将配置的审批流初始化为 pending 状态（重置已有审批进度）
-    project.preWorkApprovals = approvalFlow.map(node => ({
-      role: node.role,
-      nodeStatus: 'pending',
-      approvers: node.approvers.map(p => ({
-        name: p.name,
-        username: p.username,
-        status: 'pending',
-        comment: '',
-        time: '',
-      })),
-    }))
-    return { data: project }
-  },
-
-  async approvePreWork(id, approvalData) {
-    await delay(400)
-    const project = mockProjects.find(p => p.id === id)
-    if (!project) throw new Error('Project not found')
-    const node = project.preWorkApprovals.find(a => a.role === approvalData.role)
-    if (node) {
-      const person = node.approvers.find(a => a.username === approvalData.username)
-      if (person) {
-        person.status = approvalData.action
-        person.comment = approvalData.comment
-        person.time = new Date().toLocaleString('zh-CN')
-      }
-      if (node.approvers.some(a => a.status === 'approved')) {
-        node.nodeStatus = 'approved'
-      } else if (node.approvers.every(a => a.status === 'rejected')) {
-        node.nodeStatus = 'rejected'
-      } else {
-        node.nodeStatus = 'pending'
-      }
-    }
-    return { data: project }
-  },
-
-  async saveReviewInfo(id, { approvalFlow, erpStatus }) {
-    await delay(400)
-    const project = mockProjects.find(p => p.id === id)
-    if (!project) throw new Error('Project not found')
-    project.reviewErpStatus = erpStatus
-    if (approvalFlow && approvalFlow.length) {
-      project.reviewApprovals = approvalFlow.map(node => ({
-        role: node.role,
-        nodeStatus: 'pending',
-        approvers: node.approvers.map(p => ({
-          name: p.name,
-          username: p.username,
-          status: 'pending',
-          comment: '',
-          time: '',
-        })),
-      }))
-    }
-    return { data: project }
-  },
-
-  async approveReview(id, approvalData) {
-    await delay(400)
-    const project = mockProjects.find(p => p.id === id)
-    if (!project) throw new Error('Project not found')
-    const node = (project.reviewApprovals || []).find(a => a.role === approvalData.role)
-    if (node) {
-      const person = node.approvers.find(a => a.username === approvalData.username)
-      if (person) {
-        person.status = approvalData.action
-        person.comment = approvalData.comment
-        person.time = new Date().toLocaleString('zh-CN')
-      }
-      if (node.approvers.some(a => a.status === 'approved')) {
-        node.nodeStatus = 'approved'
-      } else if (node.approvers.every(a => a.status === 'rejected')) {
-        node.nodeStatus = 'rejected'
-      } else {
-        node.nodeStatus = 'pending'
-      }
-    }
-    return { data: project }
-  },
-
-  async advanceStep(id) {
-    await delay(300)
-    const project = mockProjects.find(p => p.id === id)
-    if (project && project.currentStep < 9) {
-      project.currentStep += 1
-      const stepStatuses = ['draft', 'inProgress', 'inProgress', 'inProgress', 'inProgress', 'reviewing', 'confirmed', 'archived', 'archived']
-      project.status = stepStatuses[project.currentStep - 1] || project.status
-    }
-    return { data: project }
-  },
+  approve:       (id, data) => http.post(`/projects/${id}/approve`, data).then(r => r.data),
+  approvePreWork:(id, data) => http.post(`/projects/${id}/approve-prework`, data).then(r => r.data),
+  savePreWorkInfo:(id, data)=> http.post(`/projects/${id}/save-prework`, data).then(r => r.data),
+  saveReviewInfo:(id, data) => http.post(`/projects/${id}/save-review`, data).then(r => r.data),
+  approveReview: (id, data) => http.post(`/projects/${id}/approve-review`, data).then(r => r.data),
+  advanceStep:   (id)       => http.post(`/projects/${id}/advance-step`).then(r => r.data),
 }
 
 // ── Assets ──────────────────────────────────────────────
 export const assetApi = {
-  async list(params = {}) {
-    await delay()
-    let data = [...mockAssets]
-    if (params.projectId) data = data.filter(a => a.projectId === params.projectId)
-    if (params.keyword) data = data.filter(a =>
-      a.assetNo.includes(params.keyword) || a.assetName.includes(params.keyword)
-    )
-    return { data, total: data.length }
-  },
-
-  async create(payload) {
-    await delay(400)
-    const item = { ...payload, id: String(mockAssets.length + 1) }
-    mockAssets.push(item)
-    return { data: item }
-  },
-
-  async update(id, payload) {
-    await delay(400)
-    const idx = mockAssets.findIndex(a => a.id === id)
-    if (idx !== -1) Object.assign(mockAssets[idx], payload)
-    return { data: mockAssets[idx] }
-  },
+  list:   (params = {}) => http.get('/assets', { params }).then(r => r.data),
+  create: (payload)     => http.post('/assets', payload).then(r => r.data),
+  update: (id, payload) => http.patch(`/assets/${id}`, payload).then(r => r.data),
 }
 
 // ── Inventory ──────────────────────────────────────────────
 export const inventoryApi = {
-  async list(projectId) {
-    await delay()
-    return { data: mockInventoryItems.filter(i => i.projectId === projectId) }
-  },
-
-  async update(id, payload) {
-    await delay(400)
-    const idx = mockInventoryItems.findIndex(i => i.id === id)
-    if (idx !== -1) Object.assign(mockInventoryItems[idx], payload)
-    return { data: mockInventoryItems[idx] }
-  },
+  list:   (projectId)       => http.get(`/inventory/${projectId}`).then(r => r.data),
+  update: (id, payload)     => http.patch(`/inventory/${id}`, payload).then(r => r.data),
 }
 
 // ── Documents ──────────────────────────────────────────────
 export const documentApi = {
-  async list(projectId) {
-    await delay()
-    return { data: mockDocuments.filter(d => d.projectId === projectId) }
+  list: (projectId) => http.get(`/documents/${projectId}`).then(r => r.data),
+
+  // Upload a real File object via multipart/form-data
+  async upload(projectId, file, category, uploadedBy = '当前用户') {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('projectId', projectId)
+    form.append('category', category)
+    form.append('uploadedBy', uploadedBy)
+    return http.post('/documents/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(r => r.data)
   },
 
-  async upload(projectId, fileData) {
-    await delay(800)
-    const doc = {
-      ...fileData,
-      id: String(mockDocuments.length + 1),
-      projectId,
-      uploadedAt: new Date().toLocaleString('zh-CN'),
-      status: 'pending',
-    }
-    mockDocuments.push(doc)
-    return { data: doc }
-  },
+  remove: (id) => http.delete(`/documents/${id}`).then(r => r.data),
+
+  // Build a download/preview URL for a stored file
+  fileUrl: (storedName) => `/uploads/${storedName}`,
 }
 
 // ── Users ──────────────────────────────────────────────
@@ -257,17 +58,6 @@ export const userApi = {
   async list() {
     await delay()
     return { data: mockUsers, total: mockUsers.length }
-  },
-
-  async create(payload) {
-    await delay(400)
-    const newUser = {
-      ...payload,
-      id: String(mockUsers.length + 1),
-      status: payload.status || 'active',
-    }
-    mockUsers.push(newUser)
-    return { data: newUser }
   },
 
   async login(username, password) {
@@ -306,8 +96,5 @@ export const roleApi = {
 
 // ── Dashboard ──────────────────────────────────────────────
 export const dashboardApi = {
-  async get() {
-    await delay()
-    return { data: mockDashboard }
-  },
+  get: () => http.get('/dashboard').then(r => r.data),
 }

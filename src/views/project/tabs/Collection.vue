@@ -42,9 +42,9 @@
       </el-table-column>
       <el-table-column label="操作" width="140">
         <template #default="{ row }">
-          <el-button link type="primary" size="small">预览</el-button>
-          <el-button link type="primary" size="small">下载</el-button>
-          <el-button link type="danger" size="small" :disabled="locked">删除</el-button>
+          <el-button link type="primary" size="small" @click="previewFile(row)">预览</el-button>
+          <el-button link type="primary" size="small" @click="downloadFile(row)">下载</el-button>
+          <el-button link type="danger" size="small" :disabled="locked" @click="deleteDoc(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -58,15 +58,24 @@
           </el-select>
         </el-form-item>
         <el-form-item label="文件">
-          <el-upload drag action="#" :auto-upload="false" multiple>
+          <el-upload
+            v-model:file-list="uploadForm.fileList"
+            drag
+            action="#"
+            :auto-upload="false"
+            multiple
+            accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.png"
+            :on-exceed="() => ElMessage.warning('最多上传10个文件')"
+          >
             <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
             <div>拖拽文件到此处，或 <em>点击上传</em></div>
+            <template #tip><div style="font-size:12px;color:#8c8c8c;margin-top:4px">支持 PDF、Word、Excel、图片，单个文件不超过 20MB</div></template>
           </el-upload>
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showUploadDialog = false">取消</el-button>
-        <el-button type="primary" @click="doUpload">上传</el-button>
+        <el-button type="primary" :loading="uploading" @click="doUpload">上传</el-button>
       </template>
     </el-dialog>
 
@@ -99,7 +108,8 @@ const saving = ref(false)
 const erpStatus = ref([])
 const activeCategory = ref('ownership')
 const showUploadDialog = ref(false)
-const uploadForm = ref({ category: 'ownership' })
+const uploading = ref(false)
+const uploadForm = ref({ category: 'ownership', fileList: [] })
 
 const projectStore = useProjectStore()
 const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 4)
@@ -120,16 +130,23 @@ function getCategoryCount(cat) {
 }
 
 async function doUpload() {
-  await documentApi.upload(route.params.id, {
-    category: uploadForm.value.category,
-    name: '新上传文件.pdf',
-    size: '1.0MB',
-    uploadedBy: '当前用户',
-  })
-  showUploadDialog.value = false
-  ElMessage.success('上传成功')
-  const res = await documentApi.list(route.params.id)
-  docs.value = res.data
+  if (!uploadForm.value.fileList.length) {
+    ElMessage.warning('请先选择文件')
+    return
+  }
+  uploading.value = true
+  try {
+    for (const item of uploadForm.value.fileList) {
+      await documentApi.upload(route.params.id, item.raw, uploadForm.value.category)
+    }
+    showUploadDialog.value = false
+    uploadForm.value.fileList = []
+    ElMessage.success('上传成功')
+    const res = await documentApi.list(route.params.id)
+    docs.value = res.data
+  } finally {
+    uploading.value = false
+  }
 }
 
 async function saveCollection() {
@@ -140,6 +157,25 @@ async function saveCollection() {
   } finally {
     saving.value = false
   }
+}
+
+function previewFile(row) {
+  if (!row.storedName) return ElMessage.warning('该文件暂无预览')
+  window.open(documentApi.fileUrl(row.storedName), '_blank')
+}
+
+function downloadFile(row) {
+  if (!row.storedName) return ElMessage.warning('该文件暂无下载')
+  const a = document.createElement('a')
+  a.href = documentApi.fileUrl(row.storedName)
+  a.download = row.name
+  a.click()
+}
+
+async function deleteDoc(row) {
+  await documentApi.remove(row.id)
+  docs.value = docs.value.filter(d => d.id !== row.id)
+  ElMessage.success('已删除')
 }
 
 onMounted(async () => {

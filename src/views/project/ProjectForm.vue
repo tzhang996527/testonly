@@ -82,6 +82,7 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Upload } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
+import { documentApi } from '@/api/index.js'
 import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
 
 const { t } = useI18n()
@@ -130,11 +131,23 @@ async function handleSubmit() {
   }
   submitting.value = true
   try {
+    // 1. create project
     const project = await projectStore.create({
       ...form,
-      attachments,
       approvalFlow: approvalFlow.value,
     })
+
+    // 2. upload any selected files
+    const uploads = []
+    for (const doc of scratchDocs) {
+      for (const item of attachments[doc.key]) {
+        if (item.raw) {
+          uploads.push(documentApi.upload(project.id, item.raw, doc.key))
+        }
+      }
+    }
+    if (uploads.length) await Promise.all(uploads)
+
     await ElMessageBox.alert(
       `<div style="text-align:center;padding:8px 0">
         <div style="font-size:13px;color:#8c8c8c;margin-bottom:8px">评估单号已生成</div>
