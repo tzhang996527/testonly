@@ -1,5 +1,7 @@
 <template>
   <div class="inventory-tab">
+    <el-row :gutter="20">
+      <el-col :span="14">
     <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
       <span style="font-weight:600">资产盘点明细</span>
       <div>
@@ -93,6 +95,15 @@
         <el-button type="primary" :loading="saving" :disabled="locked" @click="saveInventory">保存</el-button>
       </div>
     </el-card>
+      </el-col>
+      <el-col :span="10">
+        <ApprovalFlowCard
+          header="清查盘点审批"
+          :approvals="stageApprovals"
+          :on-submit="handleApprove"
+        />
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -103,6 +114,8 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Plus, Document, Paperclip, Upload } from '@element-plus/icons-vue'
 import { inventoryApi } from '@/api/index.js'
+import { useProjectStore } from '@/stores/project.js'
+import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 import { useProjectStore } from '@/stores/project.js'
 
 const { t } = useI18n()
@@ -120,6 +133,11 @@ const surveyForm = reactive({
 
 const projectStore = useProjectStore()
 const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 3)
+const stageApprovals = computed(() => projectStore.current?.approvalsByStage?.['inventory'] || [])
+async function handleApprove(payload) {
+  await projectStore.approveStage(route.params.id, 'inventory', payload)
+  ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
+}
 
 const pendingCount = computed(() => items.value.filter(i => i.diff !== 0 && i.status !== 'handled').length)
 

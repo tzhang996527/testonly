@@ -90,9 +90,12 @@ const rules = {
 }
 
 const demoAccounts = [
-  { username: 'admin', name: '管理员' },
-  { username: 'zhang.wei', name: '张伟(评估师)' },
-  { username: 'chen.ceo', name: '陈总(总经理)' },
+  { username: 'admin',        name: '管理员' },
+  { username: 'zhang.wei',    name: '张伟(评估师)' },
+  { username: 'li.manager',   name: '李经理(部门负责人)' },
+  { username: 'wang.riskctrl',name: '王风控(风控)' },
+  { username: 'office.chief', name: '办公室主任' },
+  { username: 'chen.ceo',     name: '陈总(总经理)' },
 ]
 
 function fillDemo(acc) {

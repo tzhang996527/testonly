@@ -108,7 +108,7 @@
 
       <el-col :span="10">
         <ApprovalFlowCard
-          :approvals="project?.approvals || []"
+          :approvals="stageApprovals"
           :on-submit="handleApprove"
         />
       </el-col>
@@ -133,6 +133,7 @@ const projectStore = useProjectStore()
 
 const project = computed(() => projectStore.current)
 const isDraft = computed(() => project.value?.status === 'draft')
+const stageApprovals = computed(() => project.value?.approvalsByStage?.['overview'] || [])
 const editing = ref(false)
 const saving = ref(false)
 const pendingDeletes = ref([]) // document ids to delete on save
@@ -239,7 +240,7 @@ function downloadFile(file) {
 }
 
 async function handleApprove(payload) {
-  await projectStore.approve(route.params.id, payload)
+  await projectStore.approveStage(route.params.id, 'overview', payload)
   ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
 }
 </script>

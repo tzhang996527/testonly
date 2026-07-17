@@ -61,7 +61,7 @@
       <el-col :span="10">
         <ApprovalFlowCard
           header="审核审批"
-          :approvals="project?.reviewApprovals || []"
+          :approvals="stageApprovals"
           :on-submit="handleApprove"
         />
       </el-col>
@@ -88,7 +88,7 @@ const saving = ref(false)
 const erpStatus = ref([])
 const approvalFlow = ref([])
 const flowConfigRef = ref()
-
+const stageApprovals = computed(() => project.value?.approvalsByStage?.['review'] || [])
 const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 6)
 
 const scratchDocTypes = [
@@ -124,7 +124,7 @@ async function saveReview() {
 }
 
 async function handleApprove(payload) {
-  await projectStore.approveReview(route.params.id, payload)
+  await projectStore.approveStage(route.params.id, 'review', payload)
   ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
 }
 

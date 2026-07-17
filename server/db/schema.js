@@ -13,13 +13,21 @@ export const projects = sqliteTable('projects', {
   remark:      text('remark'),
   createdAt:   text('created_at'),
   createdBy:   text('created_by'),
-  // JSON columns — store arrays/objects as serialised JSON
-  approvals:        text('approvals').default('[]'),
-  preWorkApprovals: text('pre_work_approvals').default('[]'),
-  reviewApprovals:  text('review_approvals').default('[]'),
-  preWorkData:      text('pre_work_data').default('{}'),
-  reviewErpStatus:  text('review_erp_status').default('[]'),
-  attachments:      text('attachments').default('{}'),
+  preWorkData:     text('pre_work_data').default('{}'),
+  reviewErpStatus: text('review_erp_status').default('[]'),
+  attachments:     text('attachments').default('{}'),
+})
+
+// One row per approval node per stage per project.
+// stage: overview | pre-work | inventory | collection | estimation | review | confirmation | archive | tracking
+export const approvalNodes = sqliteTable('approval_nodes', {
+  id:         text('id').primaryKey(),
+  projectId:  text('project_id').notNull(),
+  stage:      text('stage').notNull(),
+  nodeIndex:  integer('node_index').notNull(),
+  role:       text('role').notNull(),
+  nodeStatus: text('node_status').notNull().default('pending'),
+  approvers:  text('approvers').notNull().default('[]'), // JSON: [{name,username,status,comment,time}]
 })
 
 export const assets = sqliteTable('assets', {

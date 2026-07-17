@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia'
-import { projectApi } from '@/api/index.js'
+import { projectApi, approvalsApi } from '@/api/index.js'
 
-// mock API returns the same object reference every time, so we must
-// deep-clone to get a new reference that Vue's reactivity system detects
 function fresh(data) {
   return JSON.parse(JSON.stringify(data))
 }
@@ -57,11 +55,39 @@ export const useProjectStore = defineStore('project', {
       if (this.current?.id === id) this.current = null
     },
 
-    async approve(id, approvalData) {
-      const res = await projectApi.approve(id, approvalData)
-      if (this.current?.id === id) this.current = fresh(res.data)
+    // ── Approvals (all stages) ──────────────────────────────
+
+    // Fetch nodes for a single stage and merge into current.approvalsByStage
+    async fetchStageApprovals(projectId, stage) {
+      const res = await approvalsApi.list(projectId, stage)
+      if (this.current?.id === projectId) {
+        if (!this.current.approvalsByStage) this.current.approvalsByStage = {}
+        this.current.approvalsByStage[stage] = fresh(res.data)
+      }
       return res.data
     },
+
+    // Save (replace) flow for a stage
+    async saveStageFlow(projectId, stage, flow) {
+      const res = await approvalsApi.save(projectId, stage, flow)
+      if (this.current?.id === projectId) {
+        if (!this.current.approvalsByStage) this.current.approvalsByStage = {}
+        this.current.approvalsByStage[stage] = fresh(res.data)
+      }
+      return res.data
+    },
+
+    // Approve a node within a stage
+    async approveStage(projectId, stage, approvalData) {
+      const res = await approvalsApi.approve(projectId, stage, approvalData)
+      if (this.current?.id === projectId) {
+        if (!this.current.approvalsByStage) this.current.approvalsByStage = {}
+        this.current.approvalsByStage[stage] = fresh(res.data)
+      }
+      return res.data
+    },
+
+    // ── Legacy helpers used by PreWork / ReviewApproval tabs ──
 
     async savePreWorkInfo(id, payload) {
       const res = await projectApi.savePreWorkInfo(id, payload)
@@ -69,20 +95,8 @@ export const useProjectStore = defineStore('project', {
       return res.data
     },
 
-    async approvePreWork(id, approvalData) {
-      const res = await projectApi.approvePreWork(id, approvalData)
-      if (this.current?.id === id) this.current = fresh(res.data)
-      return res.data
-    },
-
     async saveReviewInfo(id, payload) {
       const res = await projectApi.saveReviewInfo(id, payload)
-      if (this.current?.id === id) this.current = fresh(res.data)
-      return res.data
-    },
-
-    async approveReview(id, approvalData) {
-      const res = await projectApi.approveReview(id, approvalData)
       if (this.current?.id === id) this.current = fresh(res.data)
       return res.data
     },

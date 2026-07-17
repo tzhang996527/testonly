@@ -28,9 +28,6 @@ CREATE TABLE IF NOT EXISTS projects (
   remark TEXT,
   created_at TEXT,
   created_by TEXT,
-  approvals TEXT DEFAULT '[]',
-  pre_work_approvals TEXT DEFAULT '[]',
-  review_approvals TEXT DEFAULT '[]',
   pre_work_data TEXT DEFAULT '{}',
   review_erp_status TEXT DEFAULT '[]',
   attachments TEXT DEFAULT '{}'
@@ -72,6 +69,7 @@ CREATE TABLE IF NOT EXISTS documents (
   category TEXT,
   name TEXT,
   size TEXT,
+  stored_name TEXT,
   uploaded_by TEXT,
   uploaded_at TEXT,
   status TEXT DEFAULT 'pending'
@@ -87,6 +85,16 @@ CREATE TABLE IF NOT EXISTS users (
   status TEXT DEFAULT 'active',
   password TEXT DEFAULT '123456'
 );
+
+CREATE TABLE IF NOT EXISTS approval_nodes (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL,
+  node_index INTEGER NOT NULL,
+  role TEXT NOT NULL,
+  node_status TEXT NOT NULL DEFAULT 'pending',
+  approvers TEXT NOT NULL DEFAULT '[]'
+);
 `)
 
 // ── Seed data ──────────────────────────────────────────────
@@ -96,86 +104,63 @@ const mockProjects = [
     assetCategory: 'whole', responsible: '张伟', department: '资产评估部',
     status: 'inProgress', currentStep: 3, createdAt: '2024-01-10 09:00:00', createdBy: '张伟',
     remark: '某科技公司股权转让，需对整体资产进行评估',
-    preWorkApprovals: [
-      { role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-01-15 10:00:00' }] },
-      { role: '办公室', nodeStatus: 'approved', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-01-16 09:30:00' }] },
-      { role: '总经理', nodeStatus: 'approved', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-01-17 15:00:00' }] },
-    ],
-    approvals: [
-      { role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意立项', time: '2024-01-11 10:00:00' }, { name: '赵敏', username: 'zhao.min', status: 'pending', comment: '', time: '' }] },
-      { role: '风控', nodeStatus: 'approved', approvers: [{ name: '王风控', username: 'wang.riskctrl', status: 'approved', comment: '风险可控', time: '2024-01-12 14:00:00' }] },
-      { role: '办公室', nodeStatus: 'approved', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-01-13 09:30:00' }] },
-      { role: '总经理', nodeStatus: 'approved', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-01-14 16:00:00' }] },
-    ],
   },
   {
     id: '2', projectNo: 'PJ-2024-0002', purpose: '抵押贷款评估', baseDate: '2024-04-30',
     assetCategory: 'fixed', responsible: '李娜', department: '资产评估部',
     status: 'reviewing', currentStep: 6, createdAt: '2024-02-05 10:00:00', createdBy: '李娜',
     remark: '某制造企业固定资产抵押评估',
-    preWorkApprovals: [
-      { role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-02-08 10:00:00' }] },
-      { role: '办公室', nodeStatus: 'pending', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' }] },
-      { role: '总经理', nodeStatus: 'pending', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' }] },
-    ],
-    approvals: [
-      { role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-02-06 10:00:00' }] },
-      { role: '风控', nodeStatus: 'approved', approvers: [{ name: '王风控', username: 'wang.riskctrl', status: 'approved', comment: '已审核', time: '2024-02-07 11:00:00' }] },
-      { role: '办公室', nodeStatus: 'pending', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' }] },
-      { role: '总经理', nodeStatus: 'pending', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' }] },
-    ],
   },
   {
     id: '3', projectNo: 'PJ-2024-0003', purpose: '资产处置评估', baseDate: '2024-05-31',
     assetCategory: 'intangible', responsible: '王磊', department: '资产评估部',
     status: 'draft', currentStep: 1, createdAt: '2024-03-20 14:00:00', createdBy: '王磊',
     remark: '知识产权处置评估',
-    preWorkApprovals: [
-      { role: '部门负责人', nodeStatus: 'pending', approvers: [{ name: '李经理', username: 'li.manager', status: 'pending', comment: '', time: '' }] },
-      { role: '办公室', nodeStatus: 'pending', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' }] },
-      { role: '总经理', nodeStatus: 'pending', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' }] },
-    ],
-    approvals: [
-      { role: '部门负责人', nodeStatus: 'pending', approvers: [{ name: '李经理', username: 'li.manager', status: 'pending', comment: '', time: '' }, { name: '赵敏', username: 'zhao.min', status: 'pending', comment: '', time: '' }] },
-      { role: '风控', nodeStatus: 'pending', approvers: [{ name: '王风控', username: 'wang.riskctrl', status: 'pending', comment: '', time: '' }] },
-      { role: '办公室', nodeStatus: 'pending', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' }] },
-      { role: '总经理', nodeStatus: 'pending', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' }] },
-    ],
   },
   {
     id: '4', projectNo: 'PJ-2024-0004', purpose: '企业清算评估', baseDate: '2024-06-30',
     assetCategory: 'inventory', responsible: '赵敏', department: '资产评估部',
     status: 'confirmed', currentStep: 8, createdAt: '2024-04-01 08:00:00', createdBy: '赵敏',
     remark: '存货清算评估项目',
-    preWorkApprovals: [
-      { role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-04-03 10:00:00' }] },
-      { role: '办公室', nodeStatus: 'approved', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-04-04 09:30:00' }] },
-      { role: '总经理', nodeStatus: 'approved', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-04-05 15:00:00' }] },
-    ],
-    approvals: [
-      { role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-04-02 10:00:00' }] },
-      { role: '风控', nodeStatus: 'approved', approvers: [{ name: '王风控', username: 'wang.riskctrl', status: 'approved', comment: '已审核', time: '2024-04-03 11:00:00' }] },
-      { role: '办公室', nodeStatus: 'approved', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-04-04 09:30:00' }] },
-      { role: '总经理', nodeStatus: 'approved', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-04-05 15:00:00' }] },
-    ],
   },
   {
     id: '5', projectNo: 'PJ-2024-0005', purpose: '司法鉴定评估', baseDate: '2024-07-31',
     assetCategory: 'fixed', responsible: '张伟', department: '资产评估部',
     status: 'archived', currentStep: 9, createdAt: '2024-05-10 09:00:00', createdBy: '张伟',
     remark: '涉案固定资产司法鉴定',
-    preWorkApprovals: [
-      { role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-05-12 10:00:00' }] },
-      { role: '办公室', nodeStatus: 'approved', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-05-13 09:30:00' }] },
-      { role: '总经理', nodeStatus: 'approved', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-05-14 15:00:00' }] },
-    ],
-    approvals: [
-      { role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-05-11 10:00:00' }] },
-      { role: '风控', nodeStatus: 'approved', approvers: [{ name: '王风控', username: 'wang.riskctrl', status: 'approved', comment: '已审核', time: '2024-05-12 11:00:00' }] },
-      { role: '办公室', nodeStatus: 'approved', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-05-13 09:30:00' }] },
-      { role: '总经理', nodeStatus: 'approved', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-05-14 15:00:00' }] },
-    ],
   },
+]
+
+// approval_nodes seed: stage -> nodeIndex -> {role, nodeStatus, approvers}
+const mockApprovalNodes = [
+  // project 1 — overview (all approved)
+  { id: 'an-1', projectId: '1', stage: 'overview', nodeIndex: 0, role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意立项', time: '2024-01-11 10:00:00' }] },
+  { id: 'an-2', projectId: '1', stage: 'overview', nodeIndex: 1, role: '风控',       nodeStatus: 'approved', approvers: [{ name: '王风控', username: 'wang.riskctrl', status: 'approved', comment: '风险可控', time: '2024-01-12 14:00:00' }] },
+  { id: 'an-3', projectId: '1', stage: 'overview', nodeIndex: 2, role: '办公室',     nodeStatus: 'approved', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-01-13 09:30:00' }] },
+  { id: 'an-4', projectId: '1', stage: 'overview', nodeIndex: 3, role: '总经理',     nodeStatus: 'approved', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-01-14 16:00:00' }] },
+  // project 1 — pre-work (all approved)
+  { id: 'an-5', projectId: '1', stage: 'pre-work', nodeIndex: 0, role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-01-15 10:00:00' }] },
+  { id: 'an-6', projectId: '1', stage: 'pre-work', nodeIndex: 1, role: '办公室',     nodeStatus: 'approved', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'approved', comment: '已确认', time: '2024-01-16 09:30:00' }] },
+  { id: 'an-7', projectId: '1', stage: 'pre-work', nodeIndex: 2, role: '总经理',     nodeStatus: 'approved', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'approved', comment: '批准', time: '2024-01-17 15:00:00' }] },
+
+  // project 2 — overview (all approved)
+  { id: 'an-8',  projectId: '2', stage: 'overview', nodeIndex: 0, role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-02-06 10:00:00' }] },
+  { id: 'an-9',  projectId: '2', stage: 'overview', nodeIndex: 1, role: '风控',       nodeStatus: 'approved', approvers: [{ name: '王风控', username: 'wang.riskctrl', status: 'approved', comment: '已审核', time: '2024-02-07 11:00:00' }] },
+  { id: 'an-10', projectId: '2', stage: 'overview', nodeIndex: 2, role: '办公室',     nodeStatus: 'pending', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' }] },
+  { id: 'an-11', projectId: '2', stage: 'overview', nodeIndex: 3, role: '总经理',     nodeStatus: 'pending', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' }] },
+  // project 2 — pre-work (partial)
+  { id: 'an-12', projectId: '2', stage: 'pre-work', nodeIndex: 0, role: '部门负责人', nodeStatus: 'approved', approvers: [{ name: '李经理', username: 'li.manager', status: 'approved', comment: '同意', time: '2024-02-08 10:00:00' }] },
+  { id: 'an-13', projectId: '2', stage: 'pre-work', nodeIndex: 1, role: '办公室',     nodeStatus: 'pending', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' }] },
+  { id: 'an-14', projectId: '2', stage: 'pre-work', nodeIndex: 2, role: '总经理',     nodeStatus: 'pending', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' }] },
+  // project 2 — review (pending)
+  { id: 'an-15', projectId: '2', stage: 'review', nodeIndex: 0, role: '部门负责人', nodeStatus: 'pending', approvers: [{ name: '李经理', username: 'li.manager', status: 'pending', comment: '', time: '' }] },
+  { id: 'an-16', projectId: '2', stage: 'review', nodeIndex: 1, role: '总经理',     nodeStatus: 'pending', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' }] },
+
+  // project 3 — overview (all pending)
+  { id: 'an-17', projectId: '3', stage: 'overview', nodeIndex: 0, role: '部门负责人', nodeStatus: 'pending', approvers: [{ name: '李经理', username: 'li.manager', status: 'pending', comment: '', time: '' }, { name: '赵敏', username: 'zhao.min', status: 'pending', comment: '', time: '' }] },
+  { id: 'an-18', projectId: '3', stage: 'overview', nodeIndex: 1, role: '风控',       nodeStatus: 'pending', approvers: [{ name: '王风控', username: 'wang.riskctrl', status: 'pending', comment: '', time: '' }] },
+  { id: 'an-19', projectId: '3', stage: 'overview', nodeIndex: 2, role: '办公室',     nodeStatus: 'pending', approvers: [{ name: '办公室主任', username: 'office.chief', status: 'pending', comment: '', time: '' }] },
+  { id: 'an-20', projectId: '3', stage: 'overview', nodeIndex: 3, role: '总经理',     nodeStatus: 'pending', approvers: [{ name: '陈总', username: 'chen.ceo', status: 'pending', comment: '', time: '' }] },
 ]
 
 const mockAssets = [
@@ -217,19 +202,24 @@ const mockUsers = [
 const insertProject = sqlite.prepare(`
   INSERT OR IGNORE INTO projects
     (id, project_no, purpose, base_date, asset_category, responsible, department,
-     status, current_step, remark, created_at, created_by,
-     approvals, pre_work_approvals, review_approvals)
-  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     status, current_step, remark, created_at, created_by)
+  VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
 `)
 
 for (const p of mockProjects) {
   insertProject.run(
     p.id, p.projectNo, p.purpose, p.baseDate, p.assetCategory, p.responsible, p.department,
     p.status, p.currentStep, p.remark, p.createdAt, p.createdBy,
-    JSON.stringify(p.approvals || []),
-    JSON.stringify(p.preWorkApprovals || []),
-    JSON.stringify(p.reviewApprovals || []),
   )
+}
+
+const insertApprovalNode = sqlite.prepare(`
+  INSERT OR IGNORE INTO approval_nodes
+    (id, project_id, stage, node_index, role, node_status, approvers)
+  VALUES (?,?,?,?,?,?,?)
+`)
+for (const n of mockApprovalNodes) {
+  insertApprovalNode.run(n.id, n.projectId, n.stage, n.nodeIndex, n.role, n.nodeStatus, JSON.stringify(n.approvers))
 }
 
 const insertAsset = sqlite.prepare(`

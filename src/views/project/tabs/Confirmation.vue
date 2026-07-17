@@ -79,6 +79,12 @@
             </div>
           </div>
         </el-card>
+        <ApprovalFlowCard
+          header="结果确认审批"
+          :approvals="stageApprovals"
+          :on-submit="handleApprove"
+          style="margin-top:16px"
+        />
       </el-col>
     </el-row>
   </div>
@@ -89,11 +95,19 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { CircleCheck, Clock } from '@element-plus/icons-vue'
+import { useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/project.js'
+import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 
 const { t } = useI18n()
+const route = useRoute()
 const projectStore = useProjectStore()
 const project = computed(() => projectStore.current)
+const stageApprovals = computed(() => project.value?.approvalsByStage?.['confirmation'] || [])
+async function handleApprove(payload) {
+  await projectStore.approveStage(route.params.id, 'confirmation', payload)
+  ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
+}
 const locked = ref(project.value?.status === 'confirmed' || project.value?.status === 'archived')
 
 const form = ref({

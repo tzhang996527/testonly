@@ -1,6 +1,18 @@
 import axios from 'axios'
+import { mockRoles } from '@/api/mockData.js'
 
 const http = axios.create({ baseURL: '/api' })
+
+// attach current user to every request so dashboard myTasks works
+http.interceptors.request.use(config => {
+  try {
+    const auth = JSON.parse(localStorage.getItem('erp-auth') || '{}')
+    if (auth?.user?.username) config.headers['x-username'] = auth.user.username
+  } catch {}
+  return config
+})
+
+function delay(ms = 300) { return new Promise(r => setTimeout(r, ms)) }
 
 // ── Projects ──────────────────────────────────────────────
 export const projectApi = {
@@ -10,12 +22,16 @@ export const projectApi = {
   update: (id, payload)     => http.patch(`/projects/${id}`, payload).then(r => r.data),
   remove: (id)              => http.delete(`/projects/${id}`).then(r => r.data),
 
-  approve:       (id, data) => http.post(`/projects/${id}/approve`, data).then(r => r.data),
-  approvePreWork:(id, data) => http.post(`/projects/${id}/approve-prework`, data).then(r => r.data),
-  savePreWorkInfo:(id, data)=> http.post(`/projects/${id}/save-prework`, data).then(r => r.data),
-  saveReviewInfo:(id, data) => http.post(`/projects/${id}/save-review`, data).then(r => r.data),
-  approveReview: (id, data) => http.post(`/projects/${id}/approve-review`, data).then(r => r.data),
-  advanceStep:   (id)       => http.post(`/projects/${id}/advance-step`).then(r => r.data),
+  savePreWorkInfo:(id, data) => http.post(`/projects/${id}/save-prework`, data).then(r => r.data),
+  saveReviewInfo: (id, data) => http.post(`/projects/${id}/save-review`, data).then(r => r.data),
+  advanceStep:    (id)       => http.post(`/projects/${id}/advance-step`).then(r => r.data),
+}
+
+// ── Approvals ─────────────────────────────────────────────
+export const approvalsApi = {
+  list:    (projectId, stage)        => http.get(`/approvals/${projectId}/${stage}`).then(r => r.data),
+  save:    (projectId, stage, flow)  => http.put(`/approvals/${projectId}/${stage}`, flow).then(r => r.data),
+  approve: (projectId, stage, data)  => http.post(`/approvals/${projectId}/${stage}/approve`, data).then(r => r.data),
 }
 
 // ── Assets ──────────────────────────────────────────────
@@ -27,15 +43,14 @@ export const assetApi = {
 
 // ── Inventory ──────────────────────────────────────────────
 export const inventoryApi = {
-  list:   (projectId)       => http.get(`/inventory/${projectId}`).then(r => r.data),
-  update: (id, payload)     => http.patch(`/inventory/${id}`, payload).then(r => r.data),
+  list:   (projectId)   => http.get(`/inventory/${projectId}`).then(r => r.data),
+  update: (id, payload) => http.patch(`/inventory/${id}`, payload).then(r => r.data),
 }
 
 // ── Documents ──────────────────────────────────────────────
 export const documentApi = {
   list: (projectId) => http.get(`/documents/${projectId}`).then(r => r.data),
 
-  // Upload a real File object via multipart/form-data
   async upload(projectId, file, category, uploadedBy = '当前用户') {
     const form = new FormData()
     form.append('file', file)
@@ -49,22 +64,18 @@ export const documentApi = {
 
   remove: (id) => http.delete(`/documents/${id}`).then(r => r.data),
 
-  // Build a download/preview URL for a stored file
   fileUrl: (storedName) => `/uploads/${storedName}`,
 }
 
 // ── Users ──────────────────────────────────────────────
 export const userApi = {
-  async list() {
-    await delay()
-    return { data: mockUsers, total: mockUsers.length }
-  },
+  list:          ()          => http.get('/users').then(r => r.data),
+  create:        (data)      => http.post('/users', data).then(r => r.data),
+  update:        (id, data)  => http.patch(`/users/${id}`, data).then(r => r.data),
+  resetPassword: (id, pwd)   => http.post(`/users/${id}/reset-password`, { password: pwd }).then(r => r.data),
 
   async login(username, password) {
-    await delay(600)
-    const user = mockUsers.find(u => u.username === username)
-    if (!user || password !== '123456') throw new Error('用户名或密码错误')
-    return { data: { ...user, token: 'mock-token-' + user.id } }
+    return http.post('/users/login', { username, password }).then(r => r.data)
   },
 }
 

@@ -46,7 +46,11 @@ const submitting = ref(false)
 
 const pendingPerson = computed(() => {
   const username = authStore.user?.username
-  for (const node of props.approvals) {
+  for (let i = 0; i < props.approvals.length; i++) {
+    const node = props.approvals[i]
+    // all previous nodes must be approved before this node is actionable
+    const prevAllApproved = props.approvals.slice(0, i).every(n => n.nodeStatus === 'approved')
+    if (!prevAllApproved) break
     if (node.nodeStatus === 'approved' || node.nodeStatus === 'rejected') continue
     const person = node.approvers.find(a => a.username === username && a.status === 'pending')
     if (person) return { role: node.role, name: person.name, username: person.username }

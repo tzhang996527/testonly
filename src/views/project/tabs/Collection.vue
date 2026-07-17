@@ -1,5 +1,7 @@
 <template>
   <div class="collection-tab">
+    <el-row :gutter="20">
+      <el-col :span="14">
     <el-tabs v-model="activeCategory" type="card">
       <el-tab-pane label="权属证明" name="ownership" />
       <el-tab-pane label="财务资料" name="financial" />
@@ -90,6 +92,15 @@
         <el-button type="primary" :loading="saving" :disabled="locked" @click="saveCollection">保存</el-button>
       </div>
     </el-card>
+      </el-col>
+      <el-col :span="10">
+        <ApprovalFlowCard
+          header="资料收集审批"
+          :approvals="stageApprovals"
+          :on-submit="handleApprove"
+        />
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -100,6 +111,7 @@ import { ElMessage } from 'element-plus'
 import { Upload, Document, UploadFilled } from '@element-plus/icons-vue'
 import { documentApi } from '@/api/index.js'
 import { useProjectStore } from '@/stores/project.js'
+import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 
 const route = useRoute()
 const docs = ref([])
@@ -113,6 +125,11 @@ const uploadForm = ref({ category: 'ownership', fileList: [] })
 
 const projectStore = useProjectStore()
 const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 4)
+const stageApprovals = computed(() => projectStore.current?.approvalsByStage?.['collection'] || [])
+async function handleApprove(payload) {
+  await projectStore.approveStage(route.params.id, 'collection', payload)
+  ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
+}
 
 const categories = [
   { key: 'ownership', label: '权属证明' },

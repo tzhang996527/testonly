@@ -45,6 +45,12 @@
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
+        <ApprovalFlowCard
+          header="后续跟踪审批"
+          :approvals="stageApprovals"
+          :on-submit="handleApprove"
+          style="margin-top:16px"
+        />
       </el-col>
     </el-row>
 
@@ -74,12 +80,23 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { useRoute } from 'vue-router'
+import { useProjectStore } from '@/stores/project.js'
+import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 
 const showAddDialog = ref(false)
 const addForm = ref({ type: 'usage', date: '', content: '' })
+
+const route = useRoute()
+const projectStore = useProjectStore()
+const stageApprovals = computed(() => projectStore.current?.approvalsByStage?.['tracking'] || [])
+async function handleApprove(payload) {
+  await projectStore.approveStage(route.params.id, 'tracking', payload)
+  ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
+}
 
 const typeColors = { usage: 'primary', valueChange: 'warning', legal: 'danger', other: 'info' }
 

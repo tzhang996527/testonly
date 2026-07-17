@@ -52,6 +52,12 @@
           <el-alert type="warning" show-icon :closable="false" style="margin-top:12px"
             title="归档后不可删除，仅可查阅/导出" />
         </el-card>
+        <ApprovalFlowCard
+          header="报告归档审批"
+          :approvals="stageApprovals"
+          :on-submit="handleApprove"
+          style="margin-top:16px"
+        />
       </el-col>
     </el-row>
   </div>
@@ -61,10 +67,18 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Printer, FolderAdd } from '@element-plus/icons-vue'
+import { useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/project.js'
+import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 
+const route = useRoute()
 const projectStore = useProjectStore()
 const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 8)
+const stageApprovals = computed(() => projectStore.current?.approvalsByStage?.['archive'] || [])
+async function handleApprove(payload) {
+  await projectStore.approveStage(route.params.id, 'archive', payload)
+  ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
+}
 
 const archiveDocs = ref([
   { name: '评估立项单', type: '立项文件', archived: true },

@@ -8,6 +8,7 @@ import inventoryRouter  from './routes/inventory.js'
 import documentsRouter  from './routes/documents.js'
 import usersRouter      from './routes/users.js'
 import dashboardRouter  from './routes/dashboard.js'
+import approvalsRouter  from './routes/approvals.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -25,6 +26,7 @@ app.use('/api/inventory', inventoryRouter)
 app.use('/api/documents', documentsRouter)
 app.use('/api/users',     usersRouter)
 app.use('/api/dashboard', dashboardRouter)
+app.use('/api/approvals', approvalsRouter)
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)

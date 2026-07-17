@@ -1,5 +1,7 @@
 <template>
   <div class="estimation-tab">
+    <el-row :gutter="20">
+      <el-col :span="14">
     <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
       <span style="font-weight:600">评定估算明细表</span>
       <div>
@@ -94,6 +96,15 @@
         <el-button type="primary" :loading="saving" :disabled="locked" @click="saveEstimation">保存</el-button>
       </div>
     </el-card>
+      </el-col>
+      <el-col :span="10">
+        <ApprovalFlowCard
+          header="评定估算审批"
+          :approvals="stageApprovals"
+          :on-submit="handleApprove"
+        />
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -116,6 +127,11 @@ const addForm = ref({ assetNo: '', assetName: '', originalValue: 0, netValue: 0,
 
 const projectStore = useProjectStore()
 const locked = computed(() => (projectStore.current?.currentStep ?? 1) > 5)
+const stageApprovals = computed(() => projectStore.current?.approvalsByStage?.['estimation'] || [])
+async function handleApprove(payload) {
+  await projectStore.approveStage(route.params.id, 'estimation', payload)
+  ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
+}
 
 const totalOriginal = computed(() => assets.value.reduce((s, a) => s + a.originalValue, 0))
 const totalNet = computed(() => assets.value.reduce((s, a) => s + a.netValue, 0))

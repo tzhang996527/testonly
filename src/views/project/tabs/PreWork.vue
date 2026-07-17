@@ -96,7 +96,7 @@
       <el-col :span="10">
         <ApprovalFlowCard
           header="前期工作审批"
-          :approvals="project?.preWorkApprovals || []"
+          :approvals="stageApprovals"
           :on-submit="handleApprove"
         />
       </el-col>
@@ -120,9 +120,10 @@ const projectStore = useProjectStore()
 const project = computed(() => projectStore.current)
 
 const currentStep = computed(() => projectStore.current?.currentStep ?? 1)
+const stageApprovals = computed(() => project.value?.approvalsByStage?.['pre-work'] || [])
 const preWorkApproved = computed(() =>
-  project.value?.preWorkApprovals?.length > 0 &&
-  project.value.preWorkApprovals.every(n => n.nodeStatus === 'approved')
+  stageApprovals.value.length > 0 &&
+  stageApprovals.value.every(n => n.nodeStatus === 'approved')
 )
 const locked = computed(() => preWorkApproved.value || currentStep.value > 2)
 const flowConfigRef = ref()
@@ -159,7 +160,7 @@ function scratchFiles(key) {
 }
 
 async function handleApprove(payload) {
-  await projectStore.approvePreWork(route.params.id, payload)
+  await projectStore.approveStage(route.params.id, 'pre-work', payload)
   ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
 }
 
@@ -198,8 +199,7 @@ async function savePreWork() {
   } finally {
     saving.value = false
   }
-}
-</script>
+}</script>
 
 <style scoped>
 .scratch-docs { display: flex; flex-direction: column; gap: 0; }
