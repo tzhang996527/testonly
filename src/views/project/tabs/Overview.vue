@@ -66,6 +66,7 @@
               <el-input v-model="editForm.remark" type="textarea" :rows="3" />
             </el-form-item>
           </el-form>
+
         </el-card>
 
         <el-card shadow="never" header="底稿" style="margin-top:16px">
@@ -104,6 +105,21 @@
             </div>
           </div>
         </el-card>
+
+        <el-card shadow="never" style="margin-top:16px">
+          <template #header>审批流配置</template>
+          <template v-if="!editing">
+            <ApprovalFlowConfig :model-value="approvalFlow" :readonly="true" />
+          </template>
+          <template v-else-if="!approvalStarted">
+            <ApprovalFlowConfig ref="flowConfigRef" v-model="approvalFlow" />
+          </template>
+          <template v-else>
+            <ApprovalFlowConfig :model-value="approvalFlow" :readonly="true" />
+            <el-alert type="info" :closable="false" show-icon
+              title="审批已开始，审批流配置不可修改" style="margin-top:8px" />
+          </template>
+        </el-card>
       </el-col>
 
       <el-col :span="10">
@@ -126,6 +142,7 @@ import { useProjectStore } from '@/stores/project.js'
 import { documentApi } from '@/api/index.js'
 import StatusTag from '@/components/common/StatusTag.vue'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
+import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -136,7 +153,15 @@ const isDraft = computed(() => project.value?.status === 'draft')
 const stageApprovals = computed(() => project.value?.approvalsByStage?.['overview'] || [])
 const editing = ref(false)
 const saving = ref(false)
-const pendingDeletes = ref([]) // document ids to delete on save
+const pendingDeletes = ref([])
+const approvalFlow = ref([])
+const flowConfigRef = ref()
+
+// whether any overview approval has been acted on — locks the flow config
+const approvalStarted = computed(() =>
+  stageApprovals.value.some(n => n.nodeStatus !== 'pending' ||
+    n.approvers.some(a => a.status !== 'pending'))
+)
 
 const attachments = reactive({
   basicInfo: [],
@@ -159,26 +184,34 @@ async function startEdit() {
   editForm.remark       = p.remark       || ''
   pendingDeletes.value  = []
 
-  // Load existing files into upload lists so el-upload can show and remove them
+  // load existing files
   const { data: docs } = await documentApi.list(route.params.id, 'overview')
   for (const key of Object.keys(attachments)) attachments[key] = []
   for (const doc of docs) {
     if (attachments[doc.category] !== undefined) {
       attachments[doc.category].push({
-        uid: doc.id,
-        name: doc.name,
-        size: doc.size,
-        status: 'success',
-        _docId: doc.id,
+        uid: doc.id, name: doc.name, size: doc.size,
+        status: 'success', _docId: doc.id,
       })
     }
   }
+
+  // load existing approval flow
+  const nodes = await projectStore.fetchStageApprovals(route.params.id, 'overview')
+  if (nodes?.length) {
+    approvalFlow.value = nodes.map(n => ({
+      role: n.role,
+      approvers: n.approvers.map(a => ({ name: a.name, username: a.username })),
+    }))
+  }
+
   editing.value = true
 }
 
 function cancelEdit() {
   editing.value = false
   pendingDeletes.value = []
+  approvalFlow.value = []
   attachments.basicInfo = []
   attachments.independence = []
   attachments.riskAssessment = []
@@ -199,10 +232,17 @@ async function saveEdit() {
       }
     }
     if (uploads.length) await Promise.all(uploads)
+    // save approval flow only if not yet started
+    if (!approvalStarted.value && approvalFlow.value.length) {
+      await projectStore.saveStageFlow(route.params.id, 'overview', approvalFlow.value)
+    }
     await projectStore.fetchOne(route.params.id)
+    await projectStore.fetchStageApprovals(route.params.id, 'overview')
     await loadSavedDocs()
     editing.value = false
     ElMessage.success('已保存')
+  } catch (e) {
+    ElMessage.error('保存失败：' + (e?.response?.data?.message || e?.message || '请重试'))
   } finally {
     saving.value = false
   }
@@ -226,7 +266,16 @@ async function loadSavedDocs() {
   savedDocs.value = data
 }
 
-onMounted(loadSavedDocs)
+onMounted(async () => {
+  await loadSavedDocs()
+  const nodes = await projectStore.fetchStageApprovals(route.params.id, 'overview')
+  if (nodes?.length) {
+    approvalFlow.value = nodes.map(n => ({
+      role: n.role,
+      approvers: n.approvers.map(a => ({ name: a.name, username: a.username })),
+    }))
+  }
+})
 
 function scratchFiles(key) {
   return savedDocs.value

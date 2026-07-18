@@ -2,6 +2,7 @@ import { Router } from 'express'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
+import { randomUUID } from 'crypto'
 import { fileURLToPath } from 'url'
 import { db } from '../db/index.js'
 import { documents } from '../db/schema.js'
@@ -45,13 +46,12 @@ router.get('/:projectId', async (req, res) => {
 // POST /api/documents/upload — fields: file, projectId, stage, category, uploadedBy
 router.post('/upload', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: '未收到文件' })
-  const allRows = await db.select().from(documents)
   const sizeKB = req.file.size / 1024
   const size = sizeKB >= 1024
     ? (sizeKB / 1024).toFixed(1) + ' MB'
     : sizeKB.toFixed(0) + ' KB'
   const doc = {
-    id:         String(allRows.length + 1),
+    id:         randomUUID(),
     projectId:  req.body.projectId || '',
     stage:      req.body.stage     || '',
     category:   req.body.category  || 'other',

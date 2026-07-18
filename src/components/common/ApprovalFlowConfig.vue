@@ -1,6 +1,6 @@
 <template>
   <div class="flow-config-wrap">
-    <div style="margin-bottom:12px">
+    <div v-if="!readonly" style="margin-bottom:12px">
       <el-radio-group v-model="flowTemplate" @change="applyTemplate">
         <el-radio value="standard">标准四级审批</el-radio>
         <el-radio value="simple">简易审批</el-radio>
@@ -17,11 +17,11 @@
           :class="{ disabled: !node.enabled }"
         >
           <div class="node-header">
-            <el-checkbox v-model="node.enabled" @change="onNodeChange">
+            <el-checkbox v-model="node.enabled" @change="onNodeChange" :disabled="readonly">
               <b>{{ node.label }}</b>
               <span class="node-role-hint">{{ node.role }}</span>
             </el-checkbox>
-            <div class="node-sort">
+            <div v-if="!readonly" class="node-sort">
               <el-button link :icon="ArrowUp" :disabled="idx === 0" @click="moveNode(idx, -1)" />
               <el-button link :icon="ArrowDown" :disabled="idx === flowNodes.length - 1" @click="moveNode(idx, 1)" />
             </div>
@@ -38,6 +38,7 @@
                 placeholder="选择审批人"
                 size="small"
                 style="width:150px"
+                :disabled="readonly"
                 @change="val => onPersonChange(node, pIdx, val)"
               >
                 <el-option
@@ -48,6 +49,7 @@
                 />
               </el-select>
               <el-button
+                v-if="!readonly"
                 link
                 type="danger"
                 :icon="Close"
@@ -55,7 +57,7 @@
                 @click="removePerson(node, pIdx)"
               />
             </div>
-            <el-button link type="primary" :icon="Plus" size="small" @click="addPerson(node)">
+            <el-button v-if="!readonly" link type="primary" :icon="Plus" size="small" @click="addPerson(node)">
               添加并行审批人
             </el-button>
             <div v-if="node.approvers.length > 1" class="parallel-tip">
@@ -100,9 +102,9 @@ import { ArrowUp, ArrowDown, ArrowRight, Plus, Close, InfoFilled } from '@elemen
 import { mockUsers } from '@/api/mockData.js'
 
 const props = defineProps({
-  modelValue: { type: Array, default: () => [] },
-  // 可选：自定义候选审批人列表，不传则使用默认（排除评估师）
-  candidateUsers: { type: Array, default: null },
+  modelValue:     { type: Array,   default: () => [] },
+  candidateUsers: { type: Array,   default: null },
+  readonly:       { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -155,9 +157,13 @@ const flowNodes = ref(buildNodes(props.modelValue))
 
 // rebuild when parent loads async data (e.g. after fetching saved flow from API)
 watch(() => props.modelValue, (val) => {
-  if (val?.length) {
-    flowNodes.value = buildNodes(val)
-  }
+  if (!val?.length) return
+  const current = enabledNodes.value.map(n => ({
+    role: n.label,
+    approvers: n.approvers.map(p => ({ name: p.name, username: p.username })),
+  }))
+  if (JSON.stringify(current) === JSON.stringify(val)) return
+  flowNodes.value = buildNodes(val)
 }, { deep: true })
 
 const enabledNodes = computed(() => flowNodes.value.filter(n => n.enabled))
