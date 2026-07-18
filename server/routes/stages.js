@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
 import {
   stagePreWork, stageInventory, stageCollection,
@@ -86,9 +87,8 @@ router.get('/:projectId/tracking', async (req, res) => {
 
 // POST /api/stages/:projectId/tracking
 router.post('/:projectId/tracking', async (req, res) => {
-  const allRows = await db.select().from(trackingRecords)
   const record = {
-    id:        String(allRows.length + 1),
+    id:        randomUUID(),
     projectId: req.params.projectId,
     type:      req.body.type     || 'other',
     date:      req.body.date     || '',

@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
 import { roles } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
@@ -21,7 +22,7 @@ router.post('/', async (req, res) => {
   const all = await db.select().from(roles)
   const maxOrder = all.reduce((m, r) => Math.max(m, r.sortOrder), 0)
   const item = {
-    id:          'r' + (Date.now()),
+    id:          randomUUID(),
     key:         req.body.key,
     label:       req.body.label,
     tagType:     req.body.tagType || '',

@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
 import { assets } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
@@ -14,8 +15,7 @@ router.get('/', async (req, res) => {
 })
 
 router.post('/', async (req, res) => {
-  const allRows = await db.select().from(assets)
-  const item = { ...req.body, id: String(allRows.length + 1) }
+  const item = { ...req.body, id: randomUUID() }
   await db.insert(assets).values(item)
   res.json({ data: item })
 })

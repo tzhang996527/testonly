@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import jwt from 'jsonwebtoken'
+import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
 import { users, roles } from '../db/schema.js'
 import { eq, inArray } from 'drizzle-orm'
@@ -37,10 +38,9 @@ router.get('/', async (req, res) => {
 })
 
 router.post('/', async (req, res) => {
-  const allRows = await db.select().from(users)
   const { username, name, roles: rolesArr, department, email, status } = req.body
   const newUser = {
-    id: String(allRows.length + 1),
+    id: randomUUID(),
     username, name,
     role: serializeRoles(rolesArr || []),
     department, email,

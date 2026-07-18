@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
 import { approvalNodes, projects } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
@@ -32,14 +33,11 @@ router.put('/:projectId/:stage', async (req, res) => {
   )
 
   // insert new nodes
-  const allNodes = await db.select().from(approvalNodes)
-  let nextId = allNodes.length + 1
-
   const inserted = []
   for (let i = 0; i < flowDef.length; i++) {
     const node = flowDef[i]
     const row = {
-      id:         String(nextId++),
+      id:         randomUUID(),
       projectId,
       stage,
       nodeIndex:  i,

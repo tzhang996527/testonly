@@ -31,8 +31,9 @@
 
     <!-- Table -->
     <el-card shadow="never">
-      <!-- toolbar: column chooser -->
+      <!-- toolbar: export + column chooser -->
       <div class="table-toolbar">
+        <el-button type="success" :icon="Download" size="small" @click="exportCSV">导出</el-button>
         <el-popover placement="bottom-end" :width="220" trigger="click">
           <template #reference>
             <el-button :icon="Setting" size="small">列设置</el-button>
@@ -133,7 +134,7 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Setting } from '@element-plus/icons-vue'
+import { Plus, Search, Setting, Download } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
 import StatusTag from '@/components/common/StatusTag.vue'
 
@@ -224,6 +225,55 @@ async function handleDelete(row) {
   })
   await projectStore.remove(row.id)
   ElMessage.success('项目已删除')
+}
+
+const statusLabels = { draft: '草稿', inProgress: '执行中', reviewing: '审核中', confirmed: '已确认', archived: '已归档' }
+const assetCategoryLabels = { fixed: '固定资产', intangible: '无形资产', inventory: '存货', whole: '整体资产' }
+
+async function exportCSV() {
+  // fetch all matching rows (no pagination)
+  const { projectApi } = await import('@/api/index.js')
+  const res = await projectApi.list({
+    status:    filters.status,
+    keyword:   filters.keyword,
+    sortProp:  sort.prop,
+    sortOrder: sort.order,
+    page:      1,
+    pageSize:  9999,
+  })
+  const rows = res.data
+
+  const visibleCols = [
+    { key: 'projectNo',     label: '项目编号' },
+    ...(colVisible('purpose')       ? [{ key: 'purpose',       label: '评估目的' }]   : []),
+    ...(colVisible('assetCategory') ? [{ key: 'assetCategory', label: '资产类别' }]   : []),
+    ...(colVisible('baseDate')      ? [{ key: 'baseDate',      label: '评估基准日' }] : []),
+    ...(colVisible('responsible')   ? [{ key: 'responsible',   label: '负责人' }]     : []),
+    ...(colVisible('status')        ? [{ key: 'status',        label: '状态' }]       : []),
+    ...(colVisible('currentStep')   ? [{ key: 'currentStep',   label: '当前步骤' }]   : []),
+    ...(colVisible('createdAt')     ? [{ key: 'createdAt',     label: '创建时间' }]   : []),
+  ]
+
+  function cellValue(row, key) {
+    if (key === 'status')        return statusLabels[row[key]] || row[key]
+    if (key === 'assetCategory') return assetCategoryLabels[row[key]] || row[key]
+    if (key === 'currentStep')   return `${row[key]}/9 ${stepLabels[row[key] - 1] || ''}`
+    return row[key] ?? ''
+  }
+
+  const header = visibleCols.map(c => `"${c.label}"`).join(',')
+  const body   = rows.map(row =>
+    visibleCols.map(c => `"${String(cellValue(row, c.key)).replace(/"/g, '""')}"`).join(',')
+  ).join('\n')
+
+  const csv  = '﻿' + header + '\n' + body   // BOM for Excel UTF-8
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = `项目列表_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 onMounted(() => {
