@@ -20,7 +20,7 @@ kill_port 5173
 
 # Start backend, tee output to terminal
 echo "▶ Starting backend..."
-node server/index.js 2>&1 &
+node_modules/.bin/nodemon server/index.js 2>&1 &
 BACKEND_PID=$!
 
 # Wait for backend to be ready

@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { db } from '../db/index.js'
-import { projects, documents, approvalNodes } from '../db/schema.js'
+import { projects, documents, approvalNodes, stagePreWork, stageReview } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -13,17 +13,11 @@ const router = Router()
 
 function parse(row) {
   if (!row) return null
-  return {
-    ...row,
-    preWorkData:    JSON.parse(row.preWorkData    || '{}'),
-    reviewErpStatus:JSON.parse(row.reviewErpStatus|| '[]'),
-    attachments:    JSON.parse(row.attachments    || '{}'),
-  }
+  return { ...row }
 }
 
 function json(col) { return JSON.stringify(col) }
 
-// Load all approval_nodes for a project and group by stage
 async function loadApprovals(projectId) {
   const rows = await db.select().from(approvalNodes).where(eq(approvalNodes.projectId, projectId))
   const byStage = {}
@@ -54,7 +48,7 @@ router.get('/:id', async (req, res) => {
   res.json({ data: { ...parse(row), approvalsByStage: approvals } })
 })
 
-// POST /api/projects  — creates project + overview approval_nodes
+// POST /api/projects
 router.post('/', async (req, res) => {
   const payload = req.body
   const allRows = await db.select().from(projects)
@@ -67,13 +61,10 @@ router.post('/', async (req, res) => {
     purpose: payload.purpose, baseDate: payload.baseDate,
     assetCategory: payload.assetCategory, responsible: payload.responsible,
     department: payload.department, remark: payload.remark || '',
-    preWorkData:     json({}),
-    reviewErpStatus: json([]),
-    attachments:     json(payload.attachments || {}),
   }
   await db.insert(projects).values(newProject)
 
-  // create overview approval_nodes from provided flow
+  // create overview approval_nodes
   const defaultFlow = [
     { role: '部门负责人', approvers: [{ name: '李经理', username: 'li.manager' }] },
     { role: '风控',       approvers: [{ name: '王风控', username: 'wang.riskctrl' }] },
@@ -86,12 +77,8 @@ router.post('/', async (req, res) => {
   for (let i = 0; i < flowDef.length; i++) {
     const node = flowDef[i]
     await db.insert(approvalNodes).values({
-      id: String(nextNodeId++),
-      projectId: newId,
-      stage: 'overview',
-      nodeIndex: i,
-      role: node.role,
-      nodeStatus: 'pending',
+      id: String(nextNodeId++), projectId: newId, stage: 'overview',
+      nodeIndex: i, role: node.role, nodeStatus: 'pending',
       approvers: json(node.approvers.map(p => ({ ...p, status: 'pending', comment: '', time: '' }))),
     })
   }
@@ -110,16 +97,36 @@ router.patch('/:id', async (req, res) => {
   res.json({ data: { ...parse(updated), approvalsByStage: approvals } })
 })
 
-// POST /api/projects/:id/save-prework
+// POST /api/projects/:id/save-prework — upserts stage_pre_work + replaces approval nodes
 router.post('/:id/save-prework', async (req, res) => {
-  const [row] = await db.select().from(projects).where(eq(projects.id, req.params.id))
-  if (!row) return res.status(404).json({ message: 'Not found' })
   const { form, approvalFlow } = req.body
-  await db.update(projects)
-    .set({ preWorkData: json(form || {}) })
-    .where(eq(projects.id, req.params.id))
+  const now = new Date().toLocaleString('zh-CN')
 
-  // replace pre-work approval nodes
+  // if any pre-work approval node has already been acted on, refuse to reset
+  const existingNodes = await db.select().from(approvalNodes).where(
+    and(eq(approvalNodes.projectId, req.params.id), eq(approvalNodes.stage, 'pre-work'))
+  )
+  const inProgress = existingNodes.some(n => n.nodeStatus !== 'pending' ||
+    JSON.parse(n.approvers || '[]').some(a => a.status !== 'pending'))
+  if (inProgress) {
+    return res.status(409).json({ message: '审批已在进行中，不可重新提交' })
+  }
+
+  const payload = {
+    ...form,
+    projectId:  req.params.id,
+    members:    json(form?.members   || []),
+    erpStatus:  json(form?.erpStatus || []),
+    updatedAt:  now,
+  }
+
+  const [existing] = await db.select().from(stagePreWork).where(eq(stagePreWork.projectId, req.params.id))
+  if (existing) {
+    const { projectId: _, ...updates } = payload
+    await db.update(stagePreWork).set(updates).where(eq(stagePreWork.projectId, req.params.id))
+  } else {
+    await db.insert(stagePreWork).values(payload)
+  }
   await db.delete(approvalNodes).where(
     and(eq(approvalNodes.projectId, req.params.id), eq(approvalNodes.stage, 'pre-work'))
   )
@@ -134,19 +141,33 @@ router.post('/:id/save-prework', async (req, res) => {
     })
   }
 
-  const [updated] = await db.select().from(projects).where(eq(projects.id, req.params.id))
+  const [row] = await db.select().from(projects).where(eq(projects.id, req.params.id))
   const approvals = await loadApprovals(req.params.id)
-  res.json({ data: { ...parse(updated), approvalsByStage: approvals } })
+  res.json({ data: { ...parse(row), approvalsByStage: approvals } })
 })
 
-// POST /api/projects/:id/save-review
+// POST /api/projects/:id/save-review — upserts stage_review + replaces approval nodes
 router.post('/:id/save-review', async (req, res) => {
-  const [row] = await db.select().from(projects).where(eq(projects.id, req.params.id))
-  if (!row) return res.status(404).json({ message: 'Not found' })
   const { approvalFlow, erpStatus } = req.body
-  await db.update(projects)
-    .set({ reviewErpStatus: json(erpStatus || []) })
-    .where(eq(projects.id, req.params.id))
+  const now = new Date().toLocaleString('zh-CN')
+
+  const existingNodes = await db.select().from(approvalNodes).where(
+    and(eq(approvalNodes.projectId, req.params.id), eq(approvalNodes.stage, 'review'))
+  )
+  const inProgress = existingNodes.some(n => n.nodeStatus !== 'pending' ||
+    JSON.parse(n.approvers || '[]').some(a => a.status !== 'pending'))
+  if (inProgress) {
+    return res.status(409).json({ message: '审批已在进行中，不可重新提交' })
+  }
+  const payload = { projectId: req.params.id, erpStatus: json(erpStatus || []), updatedAt: now }
+
+  const [existing] = await db.select().from(stageReview).where(eq(stageReview.projectId, req.params.id))
+  if (existing) {
+    await db.update(stageReview).set({ erpStatus: payload.erpStatus, updatedAt: now })
+      .where(eq(stageReview.projectId, req.params.id))
+  } else {
+    await db.insert(stageReview).values(payload)
+  }
 
   await db.delete(approvalNodes).where(
     and(eq(approvalNodes.projectId, req.params.id), eq(approvalNodes.stage, 'review'))
@@ -162,9 +183,9 @@ router.post('/:id/save-review', async (req, res) => {
     })
   }
 
-  const [updated] = await db.select().from(projects).where(eq(projects.id, req.params.id))
+  const [row] = await db.select().from(projects).where(eq(projects.id, req.params.id))
   const approvals = await loadApprovals(req.params.id)
-  res.json({ data: { ...parse(updated), approvalsByStage: approvals } })
+  res.json({ data: { ...parse(row), approvalsByStage: approvals } })
 })
 
 // POST /api/projects/:id/advance-step

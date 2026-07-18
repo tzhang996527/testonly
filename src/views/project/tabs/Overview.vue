@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -160,7 +160,7 @@ async function startEdit() {
   pendingDeletes.value  = []
 
   // Load existing files into upload lists so el-upload can show and remove them
-  const { data: docs } = await documentApi.list(route.params.id)
+  const { data: docs } = await documentApi.list(route.params.id, 'overview')
   for (const key of Object.keys(attachments)) attachments[key] = []
   for (const doc of docs) {
     if (attachments[doc.category] !== undefined) {
@@ -188,20 +188,19 @@ async function saveEdit() {
   saving.value = true
   try {
     await projectStore.update(route.params.id, { ...editForm })
-    // delete files marked for removal
     if (pendingDeletes.value.length) {
       await Promise.all(pendingDeletes.value.map(id => documentApi.remove(id)))
       pendingDeletes.value = []
     }
-    // upload new files
     const uploads = []
     for (const doc of scratchDocTypes) {
       for (const item of attachments[doc.key]) {
-        if (item.raw) uploads.push(documentApi.upload(route.params.id, item.raw, doc.key))
+        if (item.raw) uploads.push(documentApi.upload(route.params.id, item.raw, 'overview', doc.key))
       }
     }
     if (uploads.length) await Promise.all(uploads)
     await projectStore.fetchOne(route.params.id)
+    await loadSavedDocs()
     editing.value = false
     ElMessage.success('已保存')
   } finally {
@@ -219,16 +218,24 @@ const scratchDocTypes = [
   { key: 'riskAssessment', label: '风险评价表' },
 ]
 
+// saved files loaded from DB (view mode)
+const savedDocs = ref([])
+
+async function loadSavedDocs() {
+  const { data } = await documentApi.list(route.params.id, 'overview')
+  savedDocs.value = data
+}
+
+onMounted(loadSavedDocs)
+
 function scratchFiles(key) {
-  const files = project.value?.attachments?.[key]
-  if (!files?.length) return []
-  return files.map(f => ({
-    name: f.name,
-    storedName: f.storedName,
-    size: f.size
-      ? (typeof f.size === 'number' ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : f.size)
-      : '',
-  }))
+  return savedDocs.value
+    .filter(f => f.category === key)
+    .map(f => ({
+      name: f.name,
+      storedName: f.storedName,
+      size: f.size || '',
+    }))
 }
 
 function downloadFile(file) {

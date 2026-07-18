@@ -58,14 +58,25 @@ export const inventoryApi = {
   update: (id, payload) => http.patch(`/inventory/${id}`, payload).then(r => r.data),
 }
 
+// ── Stages ─────────────────────────────────────────────────
+export const stagesApi = {
+  get:    (projectId, stage)         => http.get(`/stages/${projectId}/${stage}`).then(r => r.data),
+  save:   (projectId, stage, data)   => http.put(`/stages/${projectId}/${stage}`, data).then(r => r.data),
+  // tracking records
+  listTracking:   (projectId)        => http.get(`/stages/${projectId}/tracking`).then(r => r.data),
+  addTracking:    (projectId, data)  => http.post(`/stages/${projectId}/tracking`, data).then(r => r.data),
+  deleteTracking: (projectId, id)    => http.delete(`/stages/${projectId}/tracking/${id}`).then(r => r.data),
+}
+
 // ── Documents ──────────────────────────────────────────────
 export const documentApi = {
-  list: (projectId) => http.get(`/documents/${projectId}`).then(r => r.data),
+  list: (projectId, stage) => http.get(`/documents/${projectId}`, { params: stage ? { stage } : {} }).then(r => r.data),
 
-  async upload(projectId, file, category, uploadedBy = '当前用户') {
+  async upload(projectId, file, stage, category, uploadedBy = '当前用户') {
     const form = new FormData()
     form.append('file', file)
     form.append('projectId', projectId)
+    form.append('stage', stage)
     form.append('category', category)
     form.append('uploadedBy', uploadedBy)
     return http.post('/documents/upload', form, {

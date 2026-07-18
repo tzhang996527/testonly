@@ -27,10 +27,7 @@ CREATE TABLE IF NOT EXISTS projects (
   current_step INTEGER NOT NULL DEFAULT 1,
   remark TEXT,
   created_at TEXT,
-  created_by TEXT,
-  pre_work_data TEXT DEFAULT '{}',
-  review_erp_status TEXT DEFAULT '[]',
-  attachments TEXT DEFAULT '{}'
+  created_by TEXT
 );
 
 CREATE TABLE IF NOT EXISTS assets (
@@ -66,6 +63,7 @@ CREATE TABLE IF NOT EXISTS inventory_items (
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT '',
   category TEXT,
   name TEXT,
   size TEXT,
@@ -94,6 +92,81 @@ CREATE TABLE IF NOT EXISTS approval_nodes (
   role TEXT NOT NULL,
   node_status TEXT NOT NULL DEFAULT 'pending',
   approvers TEXT NOT NULL DEFAULT '[]'
+);
+
+CREATE TABLE IF NOT EXISTS stage_pre_work (
+  project_id TEXT PRIMARY KEY,
+  contract_no TEXT,
+  client_name TEXT,
+  sign_date TEXT,
+  amount REAL DEFAULT 0,
+  plan_start TEXT,
+  plan_end TEXT,
+  members TEXT DEFAULT '[]',
+  erp_status TEXT DEFAULT '[]',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stage_inventory (
+  project_id TEXT PRIMARY KEY,
+  survey_date TEXT,
+  survey_personnel TEXT,
+  survey_desc TEXT,
+  erp_status TEXT DEFAULT '[]',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stage_collection (
+  project_id TEXT PRIMARY KEY,
+  erp_status TEXT DEFAULT '[]',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stage_estimation (
+  project_id TEXT PRIMARY KEY,
+  erp_status TEXT DEFAULT '[]',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stage_review (
+  project_id TEXT PRIMARY KEY,
+  erp_status TEXT DEFAULT '[]',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stage_confirmation (
+  project_id TEXT PRIMARY KEY,
+  report_no TEXT,
+  original_value REAL DEFAULT 0,
+  net_value REAL DEFAULT 0,
+  assessed_value REAL DEFAULT 0,
+  method TEXT,
+  assessment_org TEXT,
+  assessor TEXT,
+  client_feedback TEXT,
+  confirmed_at TEXT,
+  confirmed_by TEXT,
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stage_archive (
+  project_id TEXT PRIMARY KEY,
+  archive_no TEXT,
+  archivist TEXT,
+  archive_date TEXT,
+  retention_years INTEGER DEFAULT 10,
+  storage_location TEXT,
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS tracking_records (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  type TEXT,
+  date TEXT,
+  content TEXT,
+  recorder TEXT,
+  created_at TEXT
 );
 `)
 
@@ -179,11 +252,11 @@ const mockInventoryItems = [
 ]
 
 const mockDocuments = [
-  { id: '1', projectId: '1', category: 'ownership', name: '房产证-A101.pdf', size: '2.1MB', uploadedBy: '张伟', uploadedAt: '2024-02-15 10:00:00', status: 'verified' },
-  { id: '2', projectId: '1', category: 'financial', name: '近三年审计报告.pdf', size: '5.3MB', uploadedBy: '张伟', uploadedAt: '2024-02-15 10:30:00', status: 'verified' },
-  { id: '3', projectId: '1', category: 'technical', name: '机床使用说明书.pdf', size: '1.2MB', uploadedBy: '李娜', uploadedAt: '2024-02-16 09:00:00', status: 'verified' },
-  { id: '4', projectId: '1', category: 'external', name: '市场报价单.xlsx', size: '0.8MB', uploadedBy: '李娜', uploadedAt: '2024-02-16 14:00:00', status: 'pending' },
-  { id: '5', projectId: '2', category: 'ownership', name: '设备购置发票.pdf', size: '0.5MB', uploadedBy: '李娜', uploadedAt: '2024-03-10 10:00:00', status: 'verified' },
+  { id: '1', projectId: '1', stage: 'collection', category: 'ownership',  name: '房产证-A101.pdf',   size: '2.1MB', uploadedBy: '张伟', uploadedAt: '2024-02-15 10:00:00', status: 'verified' },
+  { id: '2', projectId: '1', stage: 'collection', category: 'financial',  name: '近三年审计报告.pdf', size: '5.3MB', uploadedBy: '张伟', uploadedAt: '2024-02-15 10:30:00', status: 'verified' },
+  { id: '3', projectId: '1', stage: 'collection', category: 'technical',  name: '机床使用说明书.pdf', size: '1.2MB', uploadedBy: '李娜', uploadedAt: '2024-02-16 09:00:00', status: 'verified' },
+  { id: '4', projectId: '1', stage: 'collection', category: 'external',   name: '市场报价单.xlsx',   size: '0.8MB', uploadedBy: '李娜', uploadedAt: '2024-02-16 14:00:00', status: 'pending' },
+  { id: '5', projectId: '2', stage: 'collection', category: 'ownership',  name: '设备购置发票.pdf',  size: '0.5MB', uploadedBy: '李娜', uploadedAt: '2024-03-10 10:00:00', status: 'verified' },
 ]
 
 const mockUsers = [
@@ -245,11 +318,11 @@ for (const i of mockInventoryItems) {
 
 const insertDoc = sqlite.prepare(`
   INSERT OR IGNORE INTO documents
-    (id, project_id, category, name, size, uploaded_by, uploaded_at, status)
-  VALUES (?,?,?,?,?,?,?,?)
+    (id, project_id, stage, category, name, size, uploaded_by, uploaded_at, status)
+  VALUES (?,?,?,?,?,?,?,?,?)
 `)
 for (const d of mockDocuments) {
-  insertDoc.run(d.id, d.projectId, d.category, d.name, d.size, d.uploadedBy, d.uploadedAt, d.status)
+  insertDoc.run(d.id, d.projectId, d.stage, d.category, d.name, d.size, d.uploadedBy, d.uploadedAt, d.status)
 }
 
 const insertUser = sqlite.prepare(`
@@ -259,6 +332,27 @@ const insertUser = sqlite.prepare(`
 for (const u of mockUsers) {
   insertUser.run(u.id, u.username, u.name, u.role, u.department, u.email)
 }
+
+// seed stage_pre_work for project 1
+sqlite.prepare(`INSERT OR IGNORE INTO stage_pre_work
+  (project_id, contract_no, client_name, sign_date, amount, plan_start, plan_end, members, erp_status, updated_at)
+  VALUES (?,?,?,?,?,?,?,?,?,?)`)
+  .run('1','HT-2024-001','某科技股份有限公司','2024-01-20',150000,'2024-02-01','2024-03-31',
+    JSON.stringify(['张伟','李娜']), JSON.stringify(['contractSigned','listLocked','staffArranged']),
+    '2024-01-20 10:00:00')
+
+// seed stage_confirmation for project 4 (confirmed)
+sqlite.prepare(`INSERT OR IGNORE INTO stage_confirmation
+  (project_id, report_no, original_value, net_value, assessed_value, method, assessment_org, assessor, client_feedback, confirmed_at, confirmed_by, updated_at)
+  VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+  .run('4','RPT-2024-004',450000,450000,432000,'market','内部评估部','孙评估师','评估结论合理，已接受',
+    '2024-05-10 14:30:00','赵敏','2024-05-10 14:30:00')
+
+// seed stage_archive for project 5 (archived)
+sqlite.prepare(`INSERT OR IGNORE INTO stage_archive
+  (project_id, archive_no, archivist, archive_date, retention_years, storage_location, updated_at)
+  VALUES (?,?,?,?,?,?,?)`)
+  .run('5','ARC-2024-001','张伟','2024-06-15',10,'电子档案系统','2024-06-15 16:00:00')
 
 console.log('✅ Seed complete')
 sqlite.close()

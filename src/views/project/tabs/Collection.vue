@@ -154,7 +154,7 @@ async function doUpload() {
   uploading.value = true
   try {
     for (const item of uploadForm.value.fileList) {
-      await documentApi.upload(route.params.id, item.raw, uploadForm.value.category)
+      await documentApi.upload(route.params.id, item.raw, 'collection', uploadForm.value.category)
     }
     showUploadDialog.value = false
     uploadForm.value.fileList = []

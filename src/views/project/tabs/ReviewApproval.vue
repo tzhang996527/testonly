@@ -118,6 +118,9 @@ async function saveReview() {
       erpStatus: erpStatus.value,
     })
     ElMessage.success('审核审批信息已保存，审批请求已发送')
+  } catch (e) {
+    const msg = e?.response?.data?.message || e?.message || '请重试'
+    ElMessage.error('保存失败：' + msg)
   } finally {
     saving.value = false
   }
@@ -131,7 +134,7 @@ async function handleApprove(payload) {
 async function handleScratchUpload(category, fileItem) {
   if (!fileItem?.raw) return
   try {
-    const res = await documentApi.upload(route.params.id, fileItem.raw, category)
+    const res = await documentApi.upload(route.params.id, fileItem.raw, 'review', category)
     attachments[category].push(res.data)
     ElMessage.success('上传成功')
   } catch {

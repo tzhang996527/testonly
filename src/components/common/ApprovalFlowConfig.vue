@@ -153,6 +153,13 @@ function buildNodes(initialFlow) {
 const flowTemplate = ref('standard')
 const flowNodes = ref(buildNodes(props.modelValue))
 
+// rebuild when parent loads async data (e.g. after fetching saved flow from API)
+watch(() => props.modelValue, (val) => {
+  if (val?.length) {
+    flowNodes.value = buildNodes(val)
+  }
+}, { deep: true })
+
 const enabledNodes = computed(() => flowNodes.value.filter(n => n.enabled))
 
 // 每次内部状态变化都向父组件同步

@@ -142,7 +142,7 @@ async function handleSubmit() {
     for (const doc of scratchDocs) {
       for (const item of attachments[doc.key]) {
         if (item.raw) {
-          uploads.push(documentApi.upload(project.id, item.raw, doc.key))
+          uploads.push(documentApi.upload(project.id, item.raw, 'overview', doc.key))
         }
       }
     }

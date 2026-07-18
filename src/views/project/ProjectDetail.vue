@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -85,7 +85,8 @@ function handleTabClick(tab) {
 // 每步的完成校验：返回 { ok, reason } 或直接 throw 阻止推进
 const stepChecks = {
   1: (p) => {
-    const pending = p.approvals?.filter(n => n.nodeStatus !== 'approved') || []
+    const nodes = p.approvalsByStage?.['overview'] || []
+    const pending = nodes.filter(n => n.nodeStatus !== 'approved')
     if (pending.length) {
       return { ok: false, reason: `以下审批节点尚未通过：${pending.map(n => n.role).join('、')}` }
     }
@@ -131,7 +132,11 @@ async function handleAdvance() {
     const updated = await projectStore.advanceStep(route.params.id)
     ElMessage.success('流程已推进')
     const nextTab = allTabs[updated.currentStep - 1]?.name
-    if (nextTab) router.push(`/project/${route.params.id}/${nextTab}`)
+    if (nextTab) {
+      await nextTick()
+      activeTab.value = nextTab
+      router.push(`/project/${route.params.id}/${nextTab}`)
+    }
   } finally {
     advancing.value = false
   }
@@ -139,8 +144,10 @@ async function handleAdvance() {
 
 onMounted(async () => {
   await projectStore.fetchOne(route.params.id)
-  if (!route.path.endsWith(route.params.id)) return
-  router.replace(`/project/${route.params.id}/overview`)
+  const currentTab = allTabs[(project.value?.currentStep || 1) - 1]?.name || 'overview'
+  await nextTick()
+  activeTab.value = currentTab
+  router.replace(`/project/${route.params.id}/${currentTab}`)
 })
 </script>
 
