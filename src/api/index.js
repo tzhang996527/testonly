@@ -127,6 +127,15 @@ export const roleApi = {
   },
 }
 
+// ── Flow Configs ────────────────────────────────────────────
+export const flowConfigApi = {
+  list:        ()         => http.get('/flow-configs').then(r => r.data),
+  listEnabled: ()         => http.get('/flow-configs/enabled').then(r => r.data),
+  create:      (data)     => http.post('/flow-configs', data).then(r => r.data),
+  update:      (id, data) => http.patch(`/flow-configs/${id}`, data).then(r => r.data),
+  remove:      (id)       => http.delete(`/flow-configs/${id}`).then(r => r.data),
+}
+
 // ── Config ──────────────────────────────────────────────
 export const configApi = {
   // purposes

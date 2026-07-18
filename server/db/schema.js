@@ -156,6 +156,15 @@ export const stageArchive = sqliteTable('stage_archive', {
 
 // ── Config tables ─────────────────────────────────────────────────────────────
 
+export const flowConfigs = sqliteTable('flow_configs', {
+  id:        text('id').primaryKey(),
+  name:      text('name').notNull(),
+  scene:     text('scene'),
+  nodes:     text('nodes').notNull().default('[]'), // JSON: [{role, approvers:[{name,username}]}]
+  sortOrder: integer('sort_order').notNull().default(0),
+  enabled:   integer('enabled').notNull().default(1),
+})
+
 export const assessmentPurposes = sqliteTable('assessment_purposes', {
   id:        text('id').primaryKey(),
   name:      text('name').notNull(),

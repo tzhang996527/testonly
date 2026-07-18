@@ -182,6 +182,15 @@ CREATE TABLE IF NOT EXISTS assessment_methods (
   sort_order INTEGER NOT NULL DEFAULT 0,
   enabled INTEGER NOT NULL DEFAULT 1
 );
+
+CREATE TABLE IF NOT EXISTS flow_configs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  scene TEXT,
+  nodes TEXT NOT NULL DEFAULT '[]',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1
+);
 `)
 
 // ── Seed data ──────────────────────────────────────────────
@@ -396,6 +405,56 @@ const insertMethod = sqlite.prepare(`
   VALUES (?, ?, ?, 1)
 `)
 for (const m of methodData) insertMethod.run(m.id, m.name, m.sortOrder)
+
+// seed flow_configs
+const flowConfigData = [
+  {
+    id: 'fc-1', name: '评估立项审批', scene: '新建评估立项', sortOrder: 1,
+    nodes: [
+      { role: '部门负责人', approvers: [{ name: '李经理',    username: 'li.manager' }] },
+      { role: '风控',       approvers: [{ name: '王风控',    username: 'wang.riskctrl' }] },
+      { role: '办公室',     approvers: [{ name: '办公室主任', username: 'office.chief' }] },
+      { role: '总经理',     approvers: [{ name: '陈总',      username: 'chen.ceo' }] },
+    ],
+  },
+  {
+    id: 'fc-2', name: '前期工作审批', scene: '合同签订、计划制定', sortOrder: 2,
+    nodes: [
+      { role: '部门负责人', approvers: [{ name: '李经理',    username: 'li.manager' }] },
+      { role: '办公室',     approvers: [{ name: '办公室主任', username: 'office.chief' }] },
+      { role: '总经理',     approvers: [{ name: '陈总',      username: 'chen.ceo' }] },
+    ],
+  },
+  {
+    id: 'fc-3', name: '评估结果审核', scene: '评估报告内部审核', sortOrder: 3,
+    nodes: [
+      { role: '部门负责人', approvers: [{ name: '李经理',    username: 'li.manager' }] },
+      { role: '总师室',     approvers: [{ name: '王风控',    username: 'wang.riskctrl' }] },
+      { role: '总经理',     approvers: [{ name: '陈总',      username: 'chen.ceo' }] },
+    ],
+  },
+  {
+    id: 'fc-4', name: '结果确认审批', scene: '评估结果确认单', sortOrder: 4,
+    nodes: [
+      { role: '部门负责人', approvers: [{ name: '李经理',    username: 'li.manager' }] },
+      { role: '总经理',     approvers: [{ name: '陈总',      username: 'chen.ceo' }] },
+    ],
+  },
+  {
+    id: 'fc-5', name: '报告归档审批', scene: '报告归档', sortOrder: 5, enabled: 0,
+    nodes: [
+      { role: '部门负责人', approvers: [{ name: '李经理',    username: 'li.manager' }] },
+      { role: '总经理',     approvers: [{ name: '陈总',      username: 'chen.ceo' }] },
+    ],
+  },
+]
+const insertFlowConfig = sqlite.prepare(`
+  INSERT OR IGNORE INTO flow_configs (id, name, scene, nodes, sort_order, enabled)
+  VALUES (?, ?, ?, ?, ?, ?)
+`)
+for (const fc of flowConfigData) {
+  insertFlowConfig.run(fc.id, fc.name, fc.scene, JSON.stringify(fc.nodes), fc.sortOrder, fc.enabled ?? 1)
+}
 
 console.log('✅ Seed complete')
 sqlite.close()

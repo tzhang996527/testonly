@@ -67,6 +67,25 @@
         </el-form-item>
 
         <el-divider>审批流配置</el-divider>
+        <el-form-item label="使用模板">
+          <el-select
+            v-model="selectedTemplate"
+            placeholder="可选择预设模板快速填充"
+            clearable
+            style="width:260px"
+            @change="applyFlowTemplate"
+          >
+            <el-option
+              v-for="tpl in flowTemplates"
+              :key="tpl.id"
+              :label="tpl.name"
+              :value="tpl.id"
+            >
+              <span>{{ tpl.name }}</span>
+              <span style="color:#8c8c8c;font-size:12px;margin-left:8px">{{ tpl.scene }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="审批节点">
           <ApprovalFlowConfig ref="flowConfigRef" v-model="approvalFlow" />
         </el-form-item>
@@ -89,7 +108,7 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Upload } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
-import { documentApi, configApi } from '@/api/index.js'
+import { documentApi, configApi, flowConfigApi } from '@/api/index.js'
 import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
 
 const { t } = useI18n()
@@ -99,11 +118,23 @@ const formRef = ref()
 const flowConfigRef = ref()
 const submitting = ref(false)
 const purposeOptions = ref([])
+const flowTemplates = ref([])
+const selectedTemplate = ref(null)
 
 onMounted(async () => {
-  const { data } = await configApi.listPurposes()
-  purposeOptions.value = data.filter(p => p.enabled)
+  const [purposeRes, tplRes] = await Promise.all([
+    configApi.listPurposes(),
+    flowConfigApi.listEnabled(),
+  ])
+  purposeOptions.value = purposeRes.data.filter(p => p.enabled)
+  flowTemplates.value = tplRes.data
 })
+
+function applyFlowTemplate(id) {
+  if (!id) return
+  const tpl = flowTemplates.value.find(t => t.id === id)
+  if (tpl) approvalFlow.value = tpl.nodes.map(n => ({ ...n }))
+}
 
 const form = reactive({
   purpose: '',
