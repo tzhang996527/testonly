@@ -11,8 +11,8 @@
         :collapse="appStore.sidebarCollapsed"
         :router="true"
         class="sidebar-menu"
-        background-color="#001529"
-        text-color="#ffffffa6"
+        background-color="transparent"
+        text-color="#94a3b8"
         active-text-color="#ffffff"
       >
         <el-menu-item index="/dashboard">
@@ -82,7 +82,7 @@
           </el-badge>
           <el-dropdown class="user-dropdown" @command="handleCommand">
             <div class="user-info">
-              <el-avatar :size="32" style="background:#1677ff">{{ authStore.userName.slice(0,1) }}</el-avatar>
+              <el-avatar :size="32" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);font-weight:600">{{ authStore.userName.slice(0,1) }}</el-avatar>
               <span class="user-name">{{ authStore.userName }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
@@ -159,9 +159,10 @@ function handleCommand(cmd) {
 }
 
 .app-aside {
-  background: #001529;
-  transition: width 0.3s;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  box-shadow: 2px 0 8px rgb(0 0 0 / 0.15);
 }
 
 .logo-area {
@@ -170,15 +171,17 @@ function handleCommand(cmd) {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
   color: white;
   overflow: hidden;
+  background: rgba(255,255,255,0.03);
 }
 
 .logo-icon {
   font-size: 24px;
-  color: #1677ff;
+  color: #60a5fa;
   flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgb(96 165 250 / 0.5));
 }
 
 .logo-text {
@@ -192,17 +195,18 @@ function handleCommand(cmd) {
   height: calc(100vh - 64px);
   overflow-y: auto;
   overflow-x: hidden;
+  padding: 8px 0;
 }
 
 .app-header {
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 20px;
   height: 64px;
-  box-shadow: 0 1px 4px rgba(0,21,41,0.08);
+  box-shadow: 0 1px 0 #f1f5f9;
 }
 
 .header-left {
@@ -212,10 +216,12 @@ function handleCommand(cmd) {
 }
 
 .collapse-btn {
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
-  color: #595959;
+  color: #94a3b8;
+  transition: color 0.15s;
 }
+.collapse-btn:hover { color: #475569; }
 
 .header-right {
   display: flex;
@@ -232,11 +238,16 @@ function handleCommand(cmd) {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.15s;
 }
+.user-info:hover { background: #f1f5f9; }
 
 .user-name {
-  font-size: 14px;
-  color: #262626;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #374151;
 }
 
 .main-container {
@@ -245,8 +256,8 @@ function handleCommand(cmd) {
 }
 
 .app-main {
-  background: #f5f7fa;
+  background: #f3f4f6;
   overflow-y: auto;
-  padding: 20px;
+  padding: 24px;
 }
 </style>

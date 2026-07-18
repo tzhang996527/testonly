@@ -2,6 +2,7 @@ import { Router } from 'express'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
 import { projects, documents, approvalNodes, stagePreWork, stageReview } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
@@ -33,11 +34,21 @@ async function loadApprovals(projectId) {
 
 // GET /api/projects
 router.get('/', async (req, res) => {
-  const { status, keyword } = req.query
+  const { status, keyword, sortProp, sortOrder, page = 1, pageSize = 15 } = req.query
   let rows = await db.select().from(projects)
   if (status)  rows = rows.filter(p => p.status === status)
   if (keyword) rows = rows.filter(p => p.projectNo.includes(keyword) || p.purpose.includes(keyword))
-  res.json({ data: rows.map(parse), total: rows.length })
+  if (sortProp && sortOrder) {
+    const dir = sortOrder === 'ascending' ? 1 : -1
+    rows.sort((a, b) => {
+      const av = a[sortProp] ?? '', bv = b[sortProp] ?? ''
+      return av < bv ? -dir : av > bv ? dir : 0
+    })
+  }
+  const total = rows.length
+  const start = (Number(page) - 1) * Number(pageSize)
+  rows = rows.slice(start, start + Number(pageSize))
+  res.json({ data: rows.map(parse), total })
 })
 
 // GET /api/projects/:id
@@ -51,9 +62,10 @@ router.get('/:id', async (req, res) => {
 // POST /api/projects
 router.post('/', async (req, res) => {
   const payload = req.body
-  const allRows = await db.select().from(projects)
-  const newId = String(allRows.length + 1)
+  const newId = randomUUID()
   const year = new Date().getFullYear()
+  // projectNo: sequential within the year, safe to count existing rows for display only
+  const allRows = await db.select({ id: projects.id }).from(projects)
   const projectNo = `PJ-${year}-${String(allRows.length + 1).padStart(4, '0')}`
   const now = new Date().toLocaleString('zh-CN')
   const newProject = {
@@ -72,12 +84,10 @@ router.post('/', async (req, res) => {
     { role: '总经理',     approvers: [{ name: '陈总', username: 'chen.ceo' }] },
   ]
   const flowDef = payload.approvalFlow || defaultFlow
-  const allNodes = await db.select().from(approvalNodes)
-  let nextNodeId = allNodes.length + 1
   for (let i = 0; i < flowDef.length; i++) {
     const node = flowDef[i]
     await db.insert(approvalNodes).values({
-      id: String(nextNodeId++), projectId: newId, stage: 'overview',
+      id: randomUUID(), projectId: newId, stage: 'overview',
       nodeIndex: i, role: node.role, nodeStatus: 'pending',
       approvers: json(node.approvers.map(p => ({ ...p, status: 'pending', comment: '', time: '' }))),
     })
@@ -130,12 +140,10 @@ router.post('/:id/save-prework', async (req, res) => {
   await db.delete(approvalNodes).where(
     and(eq(approvalNodes.projectId, req.params.id), eq(approvalNodes.stage, 'pre-work'))
   )
-  const allNodes = await db.select().from(approvalNodes)
-  let nextNodeId = allNodes.length + 1
   for (let i = 0; i < (approvalFlow || []).length; i++) {
     const node = approvalFlow[i]
     await db.insert(approvalNodes).values({
-      id: String(nextNodeId++), projectId: req.params.id, stage: 'pre-work',
+      id: randomUUID(), projectId: req.params.id, stage: 'pre-work',
       nodeIndex: i, role: node.role, nodeStatus: 'pending',
       approvers: json(node.approvers.map(p => ({ ...p, status: 'pending', comment: '', time: '' }))),
     })
@@ -172,12 +180,10 @@ router.post('/:id/save-review', async (req, res) => {
   await db.delete(approvalNodes).where(
     and(eq(approvalNodes.projectId, req.params.id), eq(approvalNodes.stage, 'review'))
   )
-  const allNodes = await db.select().from(approvalNodes)
-  let nextNodeId = allNodes.length + 1
   for (let i = 0; i < (approvalFlow || []).length; i++) {
     const node = approvalFlow[i]
     await db.insert(approvalNodes).values({
-      id: String(nextNodeId++), projectId: req.params.id, stage: 'review',
+      id: randomUUID(), projectId: req.params.id, stage: 'review',
       nodeIndex: i, role: node.role, nodeStatus: 'pending',
       approvers: json(node.approvers.map(p => ({ ...p, status: 'pending', comment: '', time: '' }))),
     })
