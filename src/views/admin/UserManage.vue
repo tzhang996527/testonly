@@ -5,12 +5,19 @@
       <el-button type="primary" :icon="Plus" @click="openCreateDialog">新增用户</el-button>
     </div>
     <el-card shadow="never">
-      <el-table :data="users" stripe>
+      <el-table :data="users" stripe v-loading="loading">
         <el-table-column label="用户名" prop="username" width="130" />
         <el-table-column label="姓名" prop="name" width="100" />
-        <el-table-column label="角色" prop="role" width="130">
+        <el-table-column label="角色" min-width="200">
           <template #default="{ row }">
-            <el-tag :type="roleColors[row.role]" size="small">{{ roleLabels[row.role] || row.role }}</el-tag>
+            <el-tag
+              v-for="r in row.roles"
+              :key="r"
+              :type="roleColorMap[r]"
+              size="small"
+              style="margin:2px"
+            >{{ roleLabelMap[r] || r }}</el-tag>
+            <span v-if="!row.roles?.length" style="color:#bfbfbf">—</span>
           </template>
         </el-table-column>
         <el-table-column label="部门" prop="department" width="140" />
@@ -43,9 +50,23 @@
         <el-form-item label="姓名" prop="name">
           <el-input v-model="form.name" placeholder="请输入姓名" />
         </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="form.role" placeholder="请选择角色" style="width:100%">
-            <el-option v-for="(label, value) in roleLabels" :key="value" :label="label" :value="value" />
+        <el-form-item label="角色" prop="roles">
+          <el-select
+            v-model="form.roles"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="请选择角色（可多选）"
+            style="width:100%"
+          >
+            <el-option
+              v-for="role in availableRoles"
+              :key="role.key"
+              :label="role.label"
+              :value="role.key"
+            >
+              <el-tag :type="roleColorMap[role.key]" size="small" style="margin-right:6px">{{ role.label }}</el-tag>
+            </el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="部门" prop="department">
@@ -69,11 +90,11 @@
 
     <!-- 重置密码对话框 -->
     <el-dialog v-model="resetDialogVisible" title="重置密码" width="400px" :close-on-click-modal="false">
-      <el-form ref="resetFormRef" :model="resetForm" :rules="resetRules" label-width="90px">
+      <el-form ref="resetFormRef" :model="resetForm" label-width="90px">
         <el-form-item label="用户">
           <span>{{ resetTarget?.name }}（{{ resetTarget?.username }}）</span>
         </el-form-item>
-        <el-form-item label="新密码" prop="password">
+        <el-form-item label="新密码">
           <el-input v-model="resetForm.password" type="password" show-password placeholder="留空则重置为默认密码 123456" />
         </el-form-item>
       </el-form>
@@ -89,39 +110,52 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { userApi } from '@/api/index.js'
+import { userApi, roleApi } from '@/api/index.js'
 
-const users = ref([])
-const dialogVisible = ref(false)
+const users          = ref([])
+const availableRoles = ref([])
+const loading        = ref(false)
+const dialogVisible  = ref(false)
 const resetDialogVisible = ref(false)
-const submitting = ref(false)
-const formRef = ref(null)
-const resetFormRef = ref(null)
-const editingId = ref(null)
-const resetTarget = ref(null)
+const submitting     = ref(false)
+const formRef        = ref(null)
+const editingId      = ref(null)
+const resetTarget    = ref(null)
+const resetForm      = reactive({ password: '' })
 
-const roleLabels = { admin: '系统管理员', assessor: '评估专业人员', deptManager: '部门负责人', riskControl: '风控', office: '办公室', ceo: '总经理' }
-const roleColors = { admin: 'danger', assessor: 'primary', deptManager: 'warning', riskControl: 'warning', office: '', ceo: 'success' }
+// Built from DB roles so it stays in sync with RoleManage
+const roleLabelMap = ref({})
+const roleColorMap = ref({
+  admin: 'danger', assessor: 'primary', deptManager: 'warning',
+  chiefEngineer: 'warning', ceo: 'success', riskControl: '', office: '',
+})
 
-const initialForm = () => ({ username: '', name: '', role: '', department: '', email: '', status: 'active' })
+const initialForm = () => ({ username: '', name: '', roles: [], department: '', email: '', status: 'active' })
 const form = reactive(initialForm())
-const resetForm = reactive({ password: '' })
 
 const rules = {
   username:   [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  name:       [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  role:       [{ required: true, message: '请选择角色', trigger: 'change' }],
-  department: [{ required: true, message: '请输入部门', trigger: 'blur' }],
-  email:      [
+  name:       [{ required: true, message: '请输入姓名',   trigger: 'blur' }],
+  roles:      [{ required: true, type: 'array', min: 1, message: '请至少选择一个角色', trigger: 'change' }],
+  department: [{ required: true, message: '请输入部门',   trigger: 'blur' }],
+  email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+    { type: 'email',  message: '请输入正确的邮箱格式', trigger: 'blur' },
   ],
 }
-const resetRules = {}
 
 onMounted(async () => {
-  const res = await userApi.list()
-  users.value = res.data
+  loading.value = true
+  try {
+    const [userRes, roleRes] = await Promise.all([userApi.list(), roleApi.list()])
+    users.value = userRes.data
+    availableRoles.value = roleRes.data
+    const labelMap = {}
+    for (const r of roleRes.data) labelMap[r.key] = r.label
+    roleLabelMap.value = labelMap
+  } finally {
+    loading.value = false
+  }
 })
 
 function openCreateDialog() {
@@ -132,7 +166,14 @@ function openCreateDialog() {
 
 function openEditDialog(row) {
   editingId.value = row.id
-  Object.assign(form, { username: row.username, name: row.name, role: row.role, department: row.department, email: row.email, status: row.status })
+  Object.assign(form, {
+    username:   row.username,
+    name:       row.name,
+    roles:      row.roles ? [...row.roles] : [],
+    department: row.department,
+    email:      row.email,
+    status:     row.status,
+  })
   dialogVisible.value = true
 }
 
@@ -148,7 +189,10 @@ async function handleSubmit() {
   submitting.value = true
   try {
     if (editingId.value) {
-      const res = await userApi.update(editingId.value, { name: form.name, role: form.role, department: form.department, email: form.email, status: form.status })
+      const res = await userApi.update(editingId.value, {
+        name: form.name, roles: form.roles,
+        department: form.department, email: form.email, status: form.status,
+      })
       const idx = users.value.findIndex(u => u.id === editingId.value)
       if (idx !== -1) users.value[idx] = res.data
       ElMessage.success('用户信息已更新')

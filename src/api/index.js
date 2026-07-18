@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { mockRoles } from '@/api/mockData.js'
 
 const http = axios.create({ baseURL: '/api' })
 
@@ -22,8 +21,6 @@ http.interceptors.response.use(
     return Promise.reject(err)
   }
 )
-
-function delay(ms = 300) { return new Promise(r => setTimeout(r, ms)) }
 
 // ── Projects ──────────────────────────────────────────────
 export const projectApi = {
@@ -103,28 +100,11 @@ export const userApi = {
 
 // ── Roles ──────────────────────────────────────────────
 export const roleApi = {
-  async list() {
-    await delay()
-    return { data: [...mockRoles] }
-  },
-
-  async create(payload) {
-    await delay(400)
-    const newRole = {
-      ...payload,
-      key: payload.key || payload.label.toLowerCase().replace(/\s+/g, ''),
-    }
-    mockRoles.push(newRole)
-    return { data: newRole }
-  },
-
-  async remove(key) {
-    await delay(300)
-    const idx = mockRoles.findIndex(r => r.key === key)
-    if (idx === -1) throw new Error('角色不存在')
-    mockRoles.splice(idx, 1)
-    return { data: { key } }
-  },
+  list:             ()              => http.get('/roles').then(r => r.data),
+  create:           (data)          => http.post('/roles', data).then(r => r.data),
+  update:           (key, data)     => http.patch(`/roles/${key}`, data).then(r => r.data),
+  remove:           (key)           => http.delete(`/roles/${key}`).then(r => r.data),
+  savePermissions:  (key, perms)    => http.patch(`/roles/${key}`, { permissions: perms }).then(r => r.data),
 }
 
 // ── Flow Configs ────────────────────────────────────────────

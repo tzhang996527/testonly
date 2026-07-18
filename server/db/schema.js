@@ -80,6 +80,15 @@ export const users = sqliteTable('users', {
   password:   text('password').default('123456'),
 })
 
+export const roles = sqliteTable('roles', {
+  id:          text('id').primaryKey(),
+  key:         text('key').notNull().unique(),
+  label:       text('label').notNull(),
+  tagType:     text('tag_type').default(''),
+  permissions: text('permissions').notNull().default('[]'), // JSON number[]
+  sortOrder:   integer('sort_order').notNull().default(0),
+})
+
 // ── Stage data tables (one row per project) ──────────────────────────────────
 
 // stage: pre-work

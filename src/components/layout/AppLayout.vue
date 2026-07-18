@@ -39,15 +39,15 @@
           <template #title>{{ t('nav.reports') }}</template>
         </el-menu-item>
 
-        <el-sub-menu index="admin">
+        <el-sub-menu v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_USERS) || authStore.hasPerm(PERM.ADMIN_ROLES) || authStore.hasPerm(PERM.ADMIN_FLOW)" index="admin">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>{{ t('nav.admin') }}</span>
           </template>
-          <el-menu-item index="/admin/users">{{ t('nav.userManage') }}</el-menu-item>
-          <el-menu-item index="/admin/roles">{{ t('nav.roleManage') }}</el-menu-item>
-          <el-menu-item index="/admin/flow-config">{{ t('nav.flowConfig') }}</el-menu-item>
-          <el-menu-item index="/admin/config">配置中心</el-menu-item>
+          <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_USERS)" index="/admin/users">{{ t('nav.userManage') }}</el-menu-item>
+          <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_ROLES)" index="/admin/roles">{{ t('nav.roleManage') }}</el-menu-item>
+          <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_FLOW)" index="/admin/flow-config">{{ t('nav.flowConfig') }}</el-menu-item>
+          <el-menu-item v-if="authStore.isAdmin" index="/admin/config">配置中心</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -114,6 +114,7 @@ import {
   Odometer, Document, Box, TrendCharts, Setting, Fold, Expand,
   Bell, ArrowDown, DataAnalysis,
 } from '@element-plus/icons-vue'
+import { PERM } from '@/constants/permissions.js'
 
 const { t, locale } = useI18n()
 const route = useRoute()

@@ -76,7 +76,11 @@
         <el-card v-if="!locked" shadow="never" header="审批流配置" style="margin-top:16px">
           <ApprovalFlowConfig ref="flowConfigRef" v-model="approvalFlow" />
           <div style="margin-top:16px">
-            <el-button type="primary" :loading="saving" @click="savePreWork">保存并发送审批</el-button>
+            <PermGuard :perm="PERM.PROJECT_EDIT" mode="disable" disabled-tip="无编辑权限">
+              <template #default="{ disabled }">
+                <el-button type="primary" :loading="saving" :disabled="disabled" @click="savePreWork">保存并发送审批</el-button>
+              </template>
+            </PermGuard>
           </div>
         </el-card>
       </el-col>
@@ -101,6 +105,8 @@ import { useProjectStore } from '@/stores/project.js'
 import { documentApi, stagesApi } from '@/api/index.js'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
+import PermGuard from '@/components/common/PermGuard.vue'
+import { PERM } from '@/constants/permissions.js'
 
 const route = useRoute()
 const projectStore = useProjectStore()

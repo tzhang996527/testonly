@@ -3,30 +3,40 @@ import { userApi } from '@/api/index.js'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: JSON.parse(localStorage.getItem('user') || 'null'),
-    token: localStorage.getItem('token') || '',
+    user:        JSON.parse(localStorage.getItem('user') || 'null'),
+    token:       localStorage.getItem('token') || '',
+    permissions: JSON.parse(localStorage.getItem('permissions') || '[]'),
   }),
 
   getters: {
     isLoggedIn: (state) => !!state.token,
-    userName: (state) => state.user?.name || '',
-    userRole: (state) => state.user?.role || '',
+    userName:   (state) => state.user?.name || '',
+    userRoles:  (state) => state.user?.roles || [],
+    userRole:   (state) => (state.user?.roles || [])[0] || '',  // legacy compat
+    isAdmin:    (state) => (state.user?.roles || []).includes('admin'),
+    hasPerm:    (state) => (permId) =>
+      (state.user?.roles || []).includes('admin') || state.permissions.includes(permId),
   },
 
   actions: {
     async login(username, password) {
       const res = await userApi.login(username, password)
-      this.user = res.data
-      this.token = res.data.token
-      localStorage.setItem('user', JSON.stringify(res.data))
-      localStorage.setItem('token', res.data.token)
+      const { permissions, token, ...user } = res.data
+      this.user        = user
+      this.token       = token
+      this.permissions = permissions || []
+      localStorage.setItem('user',        JSON.stringify(user))
+      localStorage.setItem('token',       token)
+      localStorage.setItem('permissions', JSON.stringify(this.permissions))
     },
 
     logout() {
-      this.user = null
-      this.token = ''
+      this.user        = null
+      this.token       = ''
+      this.permissions = []
       localStorage.removeItem('user')
       localStorage.removeItem('token')
+      localStorage.removeItem('permissions')
     },
   },
 })

@@ -55,8 +55,12 @@
             </el-form-item>
 
             <el-form-item v-if="!locked">
-              <el-button type="primary" @click="confirmResult">确认并锁定结果</el-button>
-              <el-button @click="saveResult">保存草稿</el-button>
+              <PermGuard :perm="PERM.PROJECT_EDIT" mode="disable" disabled-tip="无编辑权限">
+                <template #default="{ disabled }">
+                  <el-button type="primary" :disabled="disabled" @click="confirmResult">确认并锁定结果</el-button>
+                  <el-button :disabled="disabled" @click="saveResult">保存草稿</el-button>
+                </template>
+              </PermGuard>
             </el-form-item>
             <el-form-item v-else>
               <el-tag type="success" size="large">结果已确认锁定 — 如需修改请走变更流程</el-tag>
@@ -98,6 +102,8 @@ import { CircleCheck, Clock } from '@element-plus/icons-vue'
 import { useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/project.js'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
+import PermGuard from '@/components/common/PermGuard.vue'
+import { PERM } from '@/constants/permissions.js'
 
 const { t } = useI18n()
 const route = useRoute()

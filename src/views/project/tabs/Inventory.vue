@@ -92,7 +92,11 @@
         </div>
       </el-checkbox-group>
       <div style="margin-top:16px">
-        <el-button type="primary" :loading="saving" :disabled="locked" @click="saveInventory">保存</el-button>
+        <PermGuard :perm="PERM.PROJECT_EDIT" mode="disable" disabled-tip="无编辑权限">
+          <template #default="{ disabled }">
+            <el-button type="primary" :loading="saving" :disabled="disabled || locked" @click="saveInventory">保存</el-button>
+          </template>
+        </PermGuard>
       </div>
     </el-card>
       </el-col>
@@ -116,6 +120,8 @@ import { Plus, Document, Paperclip, Upload } from '@element-plus/icons-vue'
 import { inventoryApi } from '@/api/index.js'
 import { useProjectStore } from '@/stores/project.js'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
+import PermGuard from '@/components/common/PermGuard.vue'
+import { PERM } from '@/constants/permissions.js'
 
 const { t } = useI18n()
 const route = useRoute()

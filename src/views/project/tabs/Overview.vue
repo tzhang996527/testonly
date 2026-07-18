@@ -8,10 +8,18 @@
               <span>基本信息</span>
               <div v-if="isDraft">
                 <template v-if="!editing">
-                  <el-button size="small" type="primary" :icon="Edit" @click="startEdit">编辑</el-button>
+                  <PermGuard :perm="PERM.PROJECT_EDIT" mode="disable" disabled-tip="无编辑权限">
+                    <template #default="{ disabled }">
+                      <el-button size="small" type="primary" :icon="Edit" :disabled="disabled" @click="startEdit">编辑</el-button>
+                    </template>
+                  </PermGuard>
                 </template>
                 <template v-else>
-                  <el-button size="small" :loading="saving" type="primary" @click="saveEdit">保存</el-button>
+                  <PermGuard :perm="PERM.PROJECT_SUBMIT" mode="disable" disabled-tip="无提交审批权限">
+                    <template #default="{ disabled }">
+                      <el-button size="small" :loading="saving" type="primary" :disabled="disabled" @click="saveEdit">保存</el-button>
+                    </template>
+                  </PermGuard>
                   <el-button size="small" @click="cancelEdit">取消</el-button>
                 </template>
               </div>
@@ -150,6 +158,8 @@ import { documentApi, configApi } from '@/api/index.js'
 import StatusTag from '@/components/common/StatusTag.vue'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
+import PermGuard from '@/components/common/PermGuard.vue'
+import { PERM } from '@/constants/permissions.js'
 
 const { t } = useI18n()
 const route = useRoute()

@@ -191,6 +191,15 @@ CREATE TABLE IF NOT EXISTS flow_configs (
   sort_order INTEGER NOT NULL DEFAULT 0,
   enabled INTEGER NOT NULL DEFAULT 1
 );
+
+CREATE TABLE IF NOT EXISTS roles (
+  id TEXT PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  label TEXT NOT NULL,
+  tag_type TEXT DEFAULT '',
+  permissions TEXT NOT NULL DEFAULT '[]',
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
 `)
 
 // ── Seed data ──────────────────────────────────────────────
@@ -283,15 +292,15 @@ const mockDocuments = [
 ]
 
 const mockUsers = [
-  { id: '1', username: 'admin',        name: '系统管理员', role: 'admin',       department: '信息中心',   email: 'admin@company.com' },
-  { id: '2', username: 'zhang.wei',    name: '张伟',       role: 'assessor',    department: '资产评估部', email: 'zhang.wei@company.com' },
-  { id: '3', username: 'li.na',        name: '李娜',       role: 'assessor',    department: '资产评估部', email: 'li.na@company.com' },
-  { id: '4', username: 'wang.lei',     name: '王磊',       role: 'assessor',    department: '资产评估部', email: 'wang.lei@company.com' },
-  { id: '5', username: 'zhao.min',     name: '赵敏',       role: 'deptManager', department: '资产评估部', email: 'zhao.min@company.com' },
-  { id: '6', username: 'li.manager',   name: '李经理',     role: 'deptManager', department: '资产评估部', email: 'li.manager@company.com' },
-  { id: '7', username: 'wang.riskctrl',name: '王风控',     role: 'riskControl', department: '风控部',     email: 'wang.riskctrl@company.com' },
-  { id: '8', username: 'office.chief', name: '办公室主任', role: 'office',      department: '办公室',     email: 'office@company.com' },
-  { id: '9', username: 'chen.ceo',     name: '陈总',       role: 'ceo',         department: '总经理室',   email: 'ceo@company.com' },
+  { id: '1', username: 'admin',         name: '系统管理员', roles: ['admin'],                      department: '信息中心',   email: 'admin@company.com' },
+  { id: '2', username: 'zhang.wei',     name: '张伟',       roles: ['assessor'],                   department: '资产评估部', email: 'zhang.wei@company.com' },
+  { id: '3', username: 'li.na',         name: '李娜',       roles: ['assessor'],                   department: '资产评估部', email: 'li.na@company.com' },
+  { id: '4', username: 'wang.lei',      name: '王磊',       roles: ['assessor'],                   department: '资产评估部', email: 'wang.lei@company.com' },
+  { id: '5', username: 'zhao.min',      name: '赵敏',       roles: ['assessor', 'deptManager'],    department: '资产评估部', email: 'zhao.min@company.com' },
+  { id: '6', username: 'li.manager',    name: '李经理',     roles: ['deptManager'],                department: '资产评估部', email: 'li.manager@company.com' },
+  { id: '7', username: 'wang.riskctrl', name: '王风控',     roles: ['riskControl'],                department: '风控部',     email: 'wang.riskctrl@company.com' },
+  { id: '8', username: 'office.chief',  name: '办公室主任', roles: ['office'],                     department: '办公室',     email: 'office@company.com' },
+  { id: '9', username: 'chen.ceo',      name: '陈总',       roles: ['ceo'],                        department: '总经理室',   email: 'ceo@company.com' },
 ]
 
 // ── Insert (skip if already exists) ───────────────────────
@@ -353,7 +362,7 @@ const insertUser = sqlite.prepare(`
   VALUES (?,?,?,?,?,?,'active')
 `)
 for (const u of mockUsers) {
-  insertUser.run(u.id, u.username, u.name, u.role, u.department, u.email)
+  insertUser.run(u.id, u.username, u.name, JSON.stringify(u.roles), u.department, u.email)
 }
 
 // seed stage_pre_work for project 1
@@ -405,6 +414,29 @@ const insertMethod = sqlite.prepare(`
   VALUES (?, ?, ?, 1)
 `)
 for (const m of methodData) insertMethod.run(m.id, m.name, m.sortOrder)
+
+// seed roles
+const rolesData = [
+  { id: 'r1', key: 'admin',         label: '系统管理员',   tagType: 'danger',  sortOrder: 1,
+    permissions: [11,12,13,14,21,22,23,31,32,33,41,42,43,51,52,53,54,61,62,63,71,72,73] },
+  { id: 'r2', key: 'assessor',      label: '评估专业人员', tagType: 'primary', sortOrder: 2,
+    permissions: [11,12,13,14,21,22,23,31,32,41,42,61,63] },
+  { id: 'r3', key: 'deptManager',   label: '部门负责人',   tagType: 'warning', sortOrder: 3,
+    permissions: [11,13,21,22,23,31,32,41,42,43,51,52,61,62,63] },
+  { id: 'r4', key: 'chiefEngineer', label: '总师室',       tagType: 'warning', sortOrder: 4,
+    permissions: [11,13,21,22,23,31,32,41,42,43,51,52,53,61,62,63] },
+  { id: 'r5', key: 'ceo',           label: '总经理',       tagType: 'success', sortOrder: 5,
+    permissions: [11,13,14,21,23,31,32,41,43,51,52,53,54,61,62,63] },
+  { id: 'r6', key: 'riskControl',   label: '风控',         tagType: '',        sortOrder: 6,
+    permissions: [11,13,14,21,31,41,51,52,61] },
+]
+const insertRole = sqlite.prepare(`
+  INSERT OR IGNORE INTO roles (id, key, label, tag_type, permissions, sort_order)
+  VALUES (?, ?, ?, ?, ?, ?)
+`)
+for (const r of rolesData) {
+  insertRole.run(r.id, r.key, r.label, r.tagType, JSON.stringify(r.permissions), r.sortOrder)
+}
 
 // seed flow_configs
 const flowConfigData = [

@@ -12,6 +12,7 @@ import approvalsRouter  from './routes/approvals.js'
 import stagesRouter     from './routes/stages.js'
 import configRouter     from './routes/config.js'
 import flowConfigRouter from './routes/flowConfig.js'
+import rolesRouter      from './routes/roles.js'
 import { authMiddleware } from './middleware/auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -39,6 +40,7 @@ app.use('/api/approvals', approvalsRouter)
 app.use('/api/stages',    stagesRouter)
 app.use('/api/config',       configRouter)
 app.use('/api/flow-configs', flowConfigRouter)
+app.use('/api/roles',        rolesRouter)
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)

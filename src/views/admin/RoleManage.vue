@@ -4,7 +4,7 @@
       <h3>角色管理</h3>
       <el-button type="primary" @click="showAddDialog">新建角色</el-button>
     </div>
-    <el-row :gutter="20">
+    <el-row :gutter="20" v-loading="loading">
       <el-col :span="8">
         <el-card shadow="never" header="角色列表">
           <el-menu :default-active="selectedRole" @select="handleRoleSelect">
@@ -18,10 +18,8 @@
               >
                 <template #reference>
                   <el-button
-                    link
-                    type="danger"
-                    size="small"
-                    style="margin-left:auto; min-width:auto; padding:2px 4px;"
+                    link type="danger" size="small"
+                    style="margin-left:auto;min-width:auto;padding:2px 4px"
                     @click.stop
                   >
                     <el-icon><Delete /></el-icon>
@@ -32,6 +30,7 @@
           </el-menu>
         </el-card>
       </el-col>
+
       <el-col :span="16">
         <el-card shadow="never" :header="'权限配置: ' + (roles.find(r=>r.key===selectedRole)?.label || '')">
           <el-tree
@@ -43,6 +42,10 @@
             :props="{ label: 'label', children: 'children' }"
             @check="handlePermCheck"
           />
+          <div style="margin-top:12px">
+            <el-button type="primary" size="small" :loading="saving" @click="savePermissions">保存权限</el-button>
+            <span v-if="unsaved" style="margin-left:10px;color:#fa8c16;font-size:12px">有未保存的修改</span>
+          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -87,163 +90,155 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { Delete } from '@element-plus/icons-vue'
 import { roleApi } from '@/api/index.js'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { PERM } from '@/constants/permissions.js'
 
-const selectedRole = ref('assessor')
+const loading   = ref(false)
+const saving    = ref(false)
+const unsaved   = ref(false)
+const roles     = ref([])
+const selectedRole = ref('')
 const permTreeRef = ref(null)
 const dialogPermTreeRef = ref(null)
 
-// 每个角色对应的权限ID列表
-const defaultRolePerms = {
-  admin: [11, 12, 13, 14, 21, 22, 23, 31, 32, 33, 41, 42, 43, 51, 52, 53, 54, 61, 62, 63, 71, 72, 73],
-  assessor: [11, 12, 13, 14, 21, 22, 23, 31, 32, 41, 42, 61, 63],
-  deptManager: [11, 13, 21, 22, 23, 31, 32, 41, 42, 43, 51, 52, 61, 62, 63],
-  chiefEngineer: [11, 13, 21, 22, 23, 31, 32, 41, 42, 43, 51, 52, 53, 61, 62, 63],
-  ceo: [11, 13, 14, 21, 23, 31, 32, 41, 43, 51, 52, 53, 54, 61, 62, 63],
-  riskControl: [11, 13, 14, 21, 31, 41, 51, 52, 61],
-}
+// roleKey -> permission id[]
+const rolePermissions = ref({})
 
-const rolePermissions = reactive({
-  admin: defaultRolePerms.admin,
-  assessor: defaultRolePerms.assessor,
-  deptManager: defaultRolePerms.deptManager,
-  chiefEngineer: defaultRolePerms.chiefEngineer,
-  ceo: defaultRolePerms.ceo,
-  riskControl: defaultRolePerms.riskControl,
-})
-
-const roles = ref([
-  { key: 'admin', label: '系统管理员', tagType: 'danger' },
-  { key: 'assessor', label: '评估专业人员', tagType: 'primary' },
-  { key: 'deptManager', label: '部门负责人', tagType: 'warning' },
-  { key: 'chiefEngineer', label: '总师室', tagType: 'warning' },
-  { key: 'ceo', label: '总经理', tagType: 'success' },
-  { key: 'riskControl', label: '风控', tagType: '' },
-])
-
-const currentCheckedKeys = computed(() => rolePermissions[selectedRole.value] || [])
+const currentCheckedKeys = computed(() => rolePermissions.value[selectedRole.value] || [])
 
 const permTree = [
   { id: 1, label: '评估立项', children: [
-    { id: 11, label: '查看' }, { id: 12, label: '创建' }, { id: 13, label: '编辑' }, { id: 14, label: '提交审批' },
+    { id: PERM.PROJECT_VIEW,   label: '查看' },
+    { id: PERM.PROJECT_CREATE, label: '创建' },
+    { id: PERM.PROJECT_EDIT,   label: '编辑' },
+    { id: PERM.PROJECT_SUBMIT, label: '提交审批' },
   ]},
   { id: 2, label: '清查盘点', children: [
-    { id: 21, label: '查看' }, { id: 22, label: '录入盘点数据' }, { id: 23, label: '处理差异' },
+    { id: PERM.INVENTORY_VIEW,  label: '查看' },
+    { id: PERM.INVENTORY_INPUT, label: '录入盘点数据' },
+    { id: PERM.INVENTORY_DIFF,  label: '处理差异' },
   ]},
   { id: 3, label: '资料收集', children: [
-    { id: 31, label: '查看' }, { id: 32, label: '上传资料' }, { id: 33, label: '删除资料' },
+    { id: PERM.COLLECTION_VIEW,   label: '查看' },
+    { id: PERM.COLLECTION_UPLOAD, label: '上传资料' },
+    { id: PERM.COLLECTION_DELETE, label: '删除资料' },
   ]},
   { id: 4, label: '评定估算', children: [
-    { id: 41, label: '查看' }, { id: 42, label: '录入估算' }, { id: 43, label: '修改估算' },
+    { id: PERM.ESTIMATION_VIEW,  label: '查看' },
+    { id: PERM.ESTIMATION_INPUT, label: '录入估算' },
+    { id: PERM.ESTIMATION_EDIT,  label: '修改估算' },
   ]},
   { id: 5, label: '审核审批', children: [
-    { id: 51, label: '查看' }, { id: 52, label: '一级审核' }, { id: 53, label: '二级审核' }, { id: 54, label: '最终审批' },
+    { id: PERM.REVIEW_VIEW,  label: '查看' },
+    { id: PERM.REVIEW_L1,    label: '一级审核' },
+    { id: PERM.REVIEW_L2,    label: '二级审核' },
+    { id: PERM.REVIEW_FINAL, label: '最终审批' },
   ]},
   { id: 6, label: '资产台账', children: [
-    { id: 61, label: '查看' }, { id: 62, label: '编辑' }, { id: 63, label: '导出' },
+    { id: PERM.ASSETS_VIEW,   label: '查看' },
+    { id: PERM.ASSETS_EDIT,   label: '编辑' },
+    { id: PERM.ASSETS_EXPORT, label: '导出' },
   ]},
   { id: 7, label: '系统管理', children: [
-    { id: 71, label: '用户管理' }, { id: 72, label: '角色管理' }, { id: 73, label: '流程配置' },
+    { id: PERM.ADMIN_USERS, label: '用户管理' },
+    { id: PERM.ADMIN_ROLES, label: '角色管理' },
+    { id: PERM.ADMIN_FLOW,  label: '流程配置' },
   ]},
 ]
 
-// 新建角色
+async function load() {
+  loading.value = true
+  try {
+    const { data } = await roleApi.list()
+    roles.value = data
+    data.forEach(r => { rolePermissions.value[r.key] = r.permissions })
+    if (!selectedRole.value && data.length) selectedRole.value = data[0].key
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(load)
+
+function handleRoleSelect(key) {
+  selectedRole.value = key
+  unsaved.value = false
+  setTimeout(() => {
+    permTreeRef.value?.setCheckedKeys(rolePermissions.value[key] || [])
+  }, 0)
+}
+
+function handlePermCheck() {
+  if (permTreeRef.value) {
+    rolePermissions.value[selectedRole.value] = permTreeRef.value.getCheckedKeys()
+    unsaved.value = true
+  }
+}
+
+async function savePermissions() {
+  saving.value = true
+  try {
+    await roleApi.savePermissions(selectedRole.value, rolePermissions.value[selectedRole.value])
+    unsaved.value = false
+    ElMessage.success('权限已保存')
+  } catch {
+    ElMessage.error('保存失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function handleDelete(role) {
+  try {
+    await roleApi.remove(role.key)
+    roles.value = roles.value.filter(r => r.key !== role.key)
+    delete rolePermissions.value[role.key]
+    if (selectedRole.value === role.key) {
+      selectedRole.value = roles.value[0]?.key || ''
+    }
+    ElMessage.success(`角色「${role.label}」已删除`)
+  } catch (e) {
+    ElMessage.error('删除失败: ' + (e.message || '未知错误'))
+  }
+}
+
+// ── new role dialog ───────────────────────────────────────
 const dialogVisible = ref(false)
-const submitting = ref(false)
-const formRef = ref(null)
-const form = reactive({
-  key: '',
-  label: '',
-  tagType: '',
-  permissions: [],
-})
+const submitting    = ref(false)
+const formRef       = ref(null)
+const form          = ref({ key: '', label: '', tagType: '', permissions: [] })
 
 const rules = {
   key: [
     { required: true, message: '请输入角色标识', trigger: 'blur' },
     { pattern: /^[a-zA-Z][a-zA-Z0-9]*$/, message: '角色标识必须以字母开头，仅包含字母和数字', trigger: 'blur' },
     { validator: (rule, value, callback) => {
-      if (roles.value.some(r => r.key === value)) {
-        callback(new Error('角色标识已存在'))
-      } else {
-        callback()
-      }
-    }, trigger: 'blur' },
+        roles.value.some(r => r.key === value)
+          ? callback(new Error('角色标识已存在'))
+          : callback()
+      }, trigger: 'blur' },
   ],
   label: [
     { required: true, message: '请输入角色名称', trigger: 'blur' },
     { validator: (rule, value, callback) => {
-      if (roles.value.some(r => r.label === value)) {
-        callback(new Error('角色名称已存在'))
-      } else {
-        callback()
-      }
-    }, trigger: 'blur' },
+        roles.value.some(r => r.label === value)
+          ? callback(new Error('角色名称已存在'))
+          : callback()
+      }, trigger: 'blur' },
   ],
 }
 
-async function handleDelete(role) {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除角色「${role.label}」吗？此操作不可恢复。`,
-      '删除确认',
-      { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
-    )
-    await roleApi.remove(role.key)
-    // 从 roles 列表中移除
-    const idx = roles.value.findIndex(r => r.key === role.key)
-    if (idx !== -1) roles.value.splice(idx, 1)
-    // 清理权限数据
-    delete rolePermissions[role.key]
-    // 如果删除的是当前选中的角色，切换到第一个角色
-    if (selectedRole.value === role.key) {
-      selectedRole.value = roles.value[0]?.key || ''
-    }
-    ElMessage.success(`角色「${role.label}」已删除`)
-  } catch (e) {
-    // 用户取消或删除失败都不处理
-    if (e !== 'cancel') {
-      ElMessage.error('删除失败: ' + (e.message || '未知错误'))
-    }
-  }
-}
-
-function handleRoleSelect(key) {
-  selectedRole.value = key
-  // 切换后同步树勾选状态
-  setTimeout(() => {
-    if (permTreeRef.value) {
-      permTreeRef.value.setCheckedKeys(rolePermissions[key] || [])
-    }
-  }, 0)
-}
-
-function handlePermCheck() {
-  if (permTreeRef.value) {
-    rolePermissions[selectedRole.value] = permTreeRef.value.getCheckedKeys()
-  }
+function showAddDialog() {
+  form.value = { key: '', label: '', tagType: '', permissions: [] }
+  dialogVisible.value = true
+  setTimeout(() => dialogPermTreeRef.value?.setCheckedKeys([]), 0)
 }
 
 function handleDialogPermCheck() {
-  if (dialogPermTreeRef.value) {
-    form.permissions = dialogPermTreeRef.value.getCheckedKeys()
-  }
-}
-
-function showAddDialog() {
-  form.key = ''
-  form.label = ''
-  form.tagType = ''
-  form.permissions = []
-  dialogVisible.value = true
-  // 等待 dialog 渲染完成后清空树勾选
-  setTimeout(() => {
-    if (dialogPermTreeRef.value) {
-      dialogPermTreeRef.value.setCheckedKeys([])
-    }
-  }, 0)
+  if (dialogPermTreeRef.value) form.value.permissions = dialogPermTreeRef.value.getCheckedKeys()
 }
 
 async function handleSubmit() {
@@ -251,10 +246,9 @@ async function handleSubmit() {
   if (!valid) return
   submitting.value = true
   try {
-    const { data } = await roleApi.create({ key: form.key, label: form.label, tagType: form.tagType })
+    const { data } = await roleApi.create(form.value)
     roles.value.push(data)
-    // 保存权限
-    rolePermissions[data.key] = [...form.permissions]
+    rolePermissions.value[data.key] = data.permissions || []
     selectedRole.value = data.key
     dialogVisible.value = false
     ElMessage.success('角色创建成功')
@@ -267,15 +261,6 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.page-header h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-}
+.page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.page-header h3 { margin:0; font-size:20px; font-weight:600; }
 </style>
