@@ -47,6 +47,7 @@
           <el-menu-item index="/admin/users">{{ t('nav.userManage') }}</el-menu-item>
           <el-menu-item index="/admin/roles">{{ t('nav.roleManage') }}</el-menu-item>
           <el-menu-item index="/admin/flow-config">{{ t('nav.flowConfig') }}</el-menu-item>
+          <el-menu-item index="/admin/config">配置中心</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

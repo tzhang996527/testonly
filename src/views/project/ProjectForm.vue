@@ -8,7 +8,14 @@
     <el-card shadow="never">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px" style="max-width:700px">
         <el-form-item :label="t('project.purpose')" prop="purpose">
-          <el-input v-model="form.purpose" placeholder="请输入评估目的" />
+          <el-select v-model="form.purpose" filterable allow-create placeholder="请选择或输入评估目的" style="width:100%">
+            <el-option
+              v-for="opt in purposeOptions"
+              :key="opt.id"
+              :label="opt.name"
+              :value="opt.name"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item :label="t('project.baseDate')" prop="baseDate">
           <el-date-picker v-model="form.baseDate" type="date" value-format="YYYY-MM-DD" placeholder="选择评估基准日" />
@@ -76,13 +83,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Upload } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
-import { documentApi } from '@/api/index.js'
+import { documentApi, configApi } from '@/api/index.js'
 import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
 
 const { t } = useI18n()
@@ -91,6 +98,12 @@ const projectStore = useProjectStore()
 const formRef = ref()
 const flowConfigRef = ref()
 const submitting = ref(false)
+const purposeOptions = ref([])
+
+onMounted(async () => {
+  const { data } = await configApi.listPurposes()
+  purposeOptions.value = data.filter(p => p.enabled)
+})
 
 const form = reactive({
   purpose: '',
@@ -116,7 +129,7 @@ const attachments = reactive({
 const approvalFlow = ref([])
 
 const rules = {
-  purpose: [{ required: true, message: '请输入评估目的', trigger: 'blur' }],
+  purpose: [{ required: true, message: '请选择评估目的', trigger: 'change' }],
   baseDate: [{ required: true, message: '请选择评估基准日', trigger: 'change' }],
   assetCategory: [{ required: true, message: '请选择资产类别', trigger: 'change' }],
   responsible: [{ required: true, message: '请选择负责人', trigger: 'change' }],

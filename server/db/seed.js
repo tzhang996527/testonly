@@ -168,6 +168,20 @@ CREATE TABLE IF NOT EXISTS tracking_records (
   recorder TEXT,
   created_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS assessment_purposes (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS assessment_methods (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1
+);
 `)
 
 // ── Seed data ──────────────────────────────────────────────
@@ -353,6 +367,35 @@ sqlite.prepare(`INSERT OR IGNORE INTO stage_archive
   (project_id, archive_no, archivist, archive_date, retention_years, storage_location, updated_at)
   VALUES (?,?,?,?,?,?,?)`)
   .run('5','ARC-2024-001','张伟','2024-06-15',10,'电子档案系统','2024-06-15 16:00:00')
+
+// seed assessment_purposes
+const purposeData = [
+  { id: 'ap-1', name: '股权转让评估', sortOrder: 1 },
+  { id: 'ap-2', name: '抵押贷款评估', sortOrder: 2 },
+  { id: 'ap-3', name: '资产处置评估', sortOrder: 3 },
+  { id: 'ap-4', name: '企业清算评估', sortOrder: 4 },
+  { id: 'ap-5', name: '司法鉴定评估', sortOrder: 5 },
+  { id: 'ap-6', name: '企业重组评估', sortOrder: 6 },
+  { id: 'ap-7', name: '融资评估',     sortOrder: 7 },
+]
+const insertPurpose = sqlite.prepare(`
+  INSERT OR IGNORE INTO assessment_purposes (id, name, sort_order, enabled)
+  VALUES (?, ?, ?, 1)
+`)
+for (const p of purposeData) insertPurpose.run(p.id, p.name, p.sortOrder)
+
+// seed assessment_methods
+const methodData = [
+  { id: 'am-1', name: '市场法',    sortOrder: 1 },
+  { id: 'am-2', name: '收益法',    sortOrder: 2 },
+  { id: 'am-3', name: '成本法',    sortOrder: 3 },
+  { id: 'am-4', name: '假设开发法', sortOrder: 4 },
+]
+const insertMethod = sqlite.prepare(`
+  INSERT OR IGNORE INTO assessment_methods (id, name, sort_order, enabled)
+  VALUES (?, ?, ?, 1)
+`)
+for (const m of methodData) insertMethod.run(m.id, m.name, m.sortOrder)
 
 console.log('✅ Seed complete')
 sqlite.close()

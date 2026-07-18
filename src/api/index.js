@@ -127,6 +127,20 @@ export const roleApi = {
   },
 }
 
+// ── Config ──────────────────────────────────────────────
+export const configApi = {
+  // purposes
+  listPurposes:   ()         => http.get('/config/purposes').then(r => r.data),
+  createPurpose:  (data)     => http.post('/config/purposes', data).then(r => r.data),
+  updatePurpose:  (id, data) => http.patch(`/config/purposes/${id}`, data).then(r => r.data),
+  deletePurpose:  (id)       => http.delete(`/config/purposes/${id}`).then(r => r.data),
+  // methods
+  listMethods:    ()         => http.get('/config/methods').then(r => r.data),
+  createMethod:   (data)     => http.post('/config/methods', data).then(r => r.data),
+  updateMethod:   (id, data) => http.patch(`/config/methods/${id}`, data).then(r => r.data),
+  deleteMethod:   (id)       => http.delete(`/config/methods/${id}`).then(r => r.data),
+}
+
 // ── Dashboard ──────────────────────────────────────────────
 export const dashboardApi = {
   get: () => http.get('/dashboard').then(r => r.data),

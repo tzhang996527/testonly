@@ -38,7 +38,14 @@
           <!-- edit mode -->
           <el-form v-else :model="editForm" label-width="110px">
             <el-form-item :label="t('project.purpose')">
-              <el-input v-model="editForm.purpose" />
+              <el-select v-model="editForm.purpose" filterable allow-create placeholder="请选择或输入评估目的">
+                <el-option
+                  v-for="opt in purposeOptions"
+                  :key="opt.id"
+                  :label="opt.name"
+                  :value="opt.name"
+                />
+              </el-select>
             </el-form-item>
             <el-form-item :label="t('project.baseDate')">
               <el-date-picker v-model="editForm.baseDate" type="date" value-format="YYYY-MM-DD" />
@@ -139,7 +146,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Document, Paperclip, Edit, Upload } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project.js'
-import { documentApi } from '@/api/index.js'
+import { documentApi, configApi } from '@/api/index.js'
 import StatusTag from '@/components/common/StatusTag.vue'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 import ApprovalFlowConfig from '@/components/common/ApprovalFlowConfig.vue'
@@ -156,6 +163,7 @@ const saving = ref(false)
 const pendingDeletes = ref([])
 const approvalFlow = ref([])
 const flowConfigRef = ref()
+const purposeOptions = ref([])
 
 // whether any overview approval has been acted on — locks the flow config
 const approvalStarted = computed(() =>
@@ -275,6 +283,8 @@ onMounted(async () => {
       approvers: n.approvers.map(a => ({ name: a.name, username: a.username })),
     }))
   }
+  const { data } = await configApi.listPurposes()
+  purposeOptions.value = data.filter(p => p.enabled)
 })
 
 function scratchFiles(key) {

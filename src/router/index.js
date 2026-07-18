@@ -78,6 +78,11 @@ const routes = [
         name: 'FlowConfig',
         component: () => import('@/views/admin/FlowConfig.vue'),
       },
+      {
+        path: 'admin/config',
+        name: 'ConfigCenter',
+        component: () => import('@/views/admin/ConfigCenter.vue'),
+      },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },

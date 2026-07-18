@@ -154,6 +154,22 @@ export const stageArchive = sqliteTable('stage_archive', {
   updatedAt:        text('updated_at'),
 })
 
+// ── Config tables ─────────────────────────────────────────────────────────────
+
+export const assessmentPurposes = sqliteTable('assessment_purposes', {
+  id:        text('id').primaryKey(),
+  name:      text('name').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  enabled:   integer('enabled').notNull().default(1), // 1=true, 0=false
+})
+
+export const assessmentMethods = sqliteTable('assessment_methods', {
+  id:        text('id').primaryKey(),
+  name:      text('name').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  enabled:   integer('enabled').notNull().default(1),
+})
+
 // stage: tracking — multiple rows per project
 export const trackingRecords = sqliteTable('tracking_records', {
   id:        text('id').primaryKey(),
