@@ -41,7 +41,7 @@ const routes = [
       // Assets
       { path: 'assets',  name: 'Assets',  component: () => import('@/views/assets/AssetList.vue'),        meta: { permId: PERM.ASSETS_VIEW } },
       // Reports
-      { path: 'reports', name: 'Reports', component: () => import('@/views/reports/ReportCenter.vue') },
+      { path: 'reports', name: 'Reports', component: () => import('@/views/reports/ReportCenter.vue'), meta: { permId: PERM.REPORTS_VIEW } },
       // Admin — require specific permission IDs
       { path: 'admin/users',       name: 'UserManage',   component: () => import('@/views/admin/UserManage.vue'),   meta: { permId: PERM.ADMIN_USERS } },
       { path: 'admin/roles',       name: 'RoleManage',   component: () => import('@/views/admin/RoleManage.vue'),   meta: { permId: PERM.ADMIN_ROLES } },

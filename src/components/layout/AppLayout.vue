@@ -29,12 +29,12 @@
           <el-menu-item index="/project/create">{{ t('nav.projectCreate') }}</el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item index="/assets">
+        <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ASSETS_VIEW)" index="/assets">
           <el-icon><Box /></el-icon>
           <template #title>{{ t('nav.assets') }}</template>
         </el-menu-item>
 
-        <el-menu-item index="/reports">
+        <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.REPORTS_VIEW)" index="/reports">
           <el-icon><TrendCharts /></el-icon>
           <template #title>{{ t('nav.reports') }}</template>
         </el-menu-item>

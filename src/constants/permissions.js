@@ -32,6 +32,9 @@ export const PERM = {
   ASSETS_EDIT:   62,
   ASSETS_EXPORT: 63,
 
+  // ── 报表中心 ─────────────────────────────────────
+  REPORTS_VIEW: 81,
+
   // ── 系统管理 ─────────────────────────────────────
   ADMIN_USERS: 71,
   ADMIN_ROLES: 72,

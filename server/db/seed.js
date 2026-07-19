@@ -429,6 +429,8 @@ const rolesData = [
     permissions: [11,13,14,21,23,31,32,41,43,51,52,53,54,61,62,63] },
   { id: 'r6', key: 'riskControl',   label: '风控',         tagType: '',        sortOrder: 6,
     permissions: [11,13,14,21,31,41,51,52,61] },
+  { id: 'r7', key: 'office',        label: '办公室',       tagType: '',        sortOrder: 7,
+    permissions: [11,12,13,14,21,31,41,51] },
 ]
 const insertRole = sqlite.prepare(`
   INSERT OR IGNORE INTO roles (id, key, label, tag_type, permissions, sort_order)

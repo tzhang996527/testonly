@@ -142,7 +142,10 @@ const permTree = [
     { id: PERM.ASSETS_EDIT,   label: '编辑' },
     { id: PERM.ASSETS_EXPORT, label: '导出' },
   ]},
-  { id: 7, label: '系统管理', children: [
+  { id: 7, label: '报表中心', children: [
+    { id: PERM.REPORTS_VIEW, label: '查看报表' },
+  ]},
+  { id: 8, label: '系统管理', children: [
     { id: PERM.ADMIN_USERS, label: '用户管理' },
     { id: PERM.ADMIN_ROLES, label: '角色管理' },
     { id: PERM.ADMIN_FLOW,  label: '流程配置' },
