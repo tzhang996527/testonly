@@ -35,6 +35,21 @@ export const PERM = {
   // ── 报表中心 ─────────────────────────────────────
   REPORTS_VIEW: 81,
 
+  // ── 会计 ─────────────────────────────────────────
+  ACCOUNTING_VIEW:   91,
+  ACCOUNTING_EDIT:   92,
+  ACCOUNTING_EXPORT: 93,
+
+  // ── 工程核算 ──────────────────────────────────────
+  ENGINEERING_VIEW:   101,
+  ENGINEERING_EDIT:   102,
+  ENGINEERING_EXPORT: 103,
+
+  // ── 人事 ─────────────────────────────────────────
+  HR_VIEW:   111,
+  HR_EDIT:   112,
+  HR_EXPORT: 113,
+
   // ── 系统管理 ─────────────────────────────────────
   ADMIN_USERS: 71,
   ADMIN_ROLES: 72,

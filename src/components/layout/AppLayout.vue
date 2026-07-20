@@ -20,13 +20,13 @@
           <template #title>{{ t('nav.dashboard') }}</template>
         </el-menu-item>
 
-        <el-sub-menu index="project">
+        <el-sub-menu v-if="authStore.isAdmin || authStore.hasPerm(PERM.PROJECT_VIEW)" index="project">
           <template #title>
             <el-icon><Document /></el-icon>
             <span>{{ t('nav.project') }}</span>
           </template>
           <el-menu-item index="/project">{{ t('nav.projectList') }}</el-menu-item>
-          <el-menu-item index="/project/create">{{ t('nav.projectCreate') }}</el-menu-item>
+          <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.PROJECT_CREATE)" index="/project/create">{{ t('nav.projectCreate') }}</el-menu-item>
         </el-sub-menu>
 
         <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ASSETS_VIEW)" index="/assets">
@@ -37,6 +37,21 @@
         <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.REPORTS_VIEW)" index="/reports">
           <el-icon><TrendCharts /></el-icon>
           <template #title>{{ t('nav.reports') }}</template>
+        </el-menu-item>
+
+        <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ACCOUNTING_VIEW)" index="/accounting">
+          <el-icon><Money /></el-icon>
+          <template #title>会计</template>
+        </el-menu-item>
+
+        <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ENGINEERING_VIEW)" index="/engineering">
+          <el-icon><Histogram /></el-icon>
+          <template #title>工程核算</template>
+        </el-menu-item>
+
+        <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.HR_VIEW)" index="/hr">
+          <el-icon><User /></el-icon>
+          <template #title>人事</template>
         </el-menu-item>
 
         <el-sub-menu v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_USERS) || authStore.hasPerm(PERM.ADMIN_ROLES) || authStore.hasPerm(PERM.ADMIN_FLOW)" index="admin">
@@ -112,7 +127,7 @@ import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import {
   Odometer, Document, Box, TrendCharts, Setting, Fold, Expand,
-  Bell, ArrowDown, DataAnalysis,
+  Bell, ArrowDown, DataAnalysis, Money, Histogram, User,
 } from '@element-plus/icons-vue'
 import { PERM } from '@/constants/permissions.js'
 

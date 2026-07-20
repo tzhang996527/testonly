@@ -2,7 +2,7 @@
   <div class="project-list">
     <div class="page-header">
       <h3>{{ t('project.title') }}</h3>
-      <el-button type="primary" :icon="Plus" @click="$router.push('/project/create')">
+      <el-button v-if="authStore.isAdmin || authStore.hasPerm(PERM.PROJECT_CREATE)" type="primary" :icon="Plus" @click="$router.push('/project/create')">
         {{ t('common.create') }}
       </el-button>
     </div>
@@ -135,11 +135,14 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Setting, Download } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth.js'
+import { PERM } from '@/constants/permissions.js'
 import { useProjectStore } from '@/stores/project.js'
 import StatusTag from '@/components/common/StatusTag.vue'
 
 const { t } = useI18n()
 const projectStore = useProjectStore()
+const authStore = useAuthStore()
 
 const filters    = reactive({ status: '', keyword: '' })
 const pagination = reactive({ page: 1, pageSize: 15 })

@@ -110,40 +110,57 @@ const rolePermissions = ref({})
 const currentCheckedKeys = computed(() => rolePermissions.value[selectedRole.value] || [])
 
 const permTree = [
-  { id: 1, label: '评估立项', children: [
-    { id: PERM.PROJECT_VIEW,   label: '查看' },
-    { id: PERM.PROJECT_CREATE, label: '创建' },
-    { id: PERM.PROJECT_EDIT,   label: '编辑' },
-    { id: PERM.PROJECT_SUBMIT, label: '提交审批' },
+  { id: 100, label: '资产评估', children: [
+    { id: 1, label: '评估立项', children: [
+      { id: PERM.PROJECT_VIEW,   label: '查看' },
+      { id: PERM.PROJECT_CREATE, label: '创建' },
+      { id: PERM.PROJECT_EDIT,   label: '编辑' },
+      { id: PERM.PROJECT_SUBMIT, label: '提交审批' },
+    ]},
+    { id: 2, label: '清查盘点', children: [
+      { id: PERM.INVENTORY_VIEW,  label: '查看' },
+      { id: PERM.INVENTORY_INPUT, label: '录入盘点数据' },
+      { id: PERM.INVENTORY_DIFF,  label: '处理差异' },
+    ]},
+    { id: 3, label: '资料收集', children: [
+      { id: PERM.COLLECTION_VIEW,   label: '查看' },
+      { id: PERM.COLLECTION_UPLOAD, label: '上传资料' },
+      { id: PERM.COLLECTION_DELETE, label: '删除资料' },
+    ]},
+    { id: 4, label: '评定估算', children: [
+      { id: PERM.ESTIMATION_VIEW,  label: '查看' },
+      { id: PERM.ESTIMATION_INPUT, label: '录入估算' },
+      { id: PERM.ESTIMATION_EDIT,  label: '修改估算' },
+    ]},
+    { id: 5, label: '审核审批', children: [
+      { id: PERM.REVIEW_VIEW,  label: '查看' },
+      { id: PERM.REVIEW_L1,    label: '一级审核' },
+      { id: PERM.REVIEW_L2,    label: '二级审核' },
+      { id: PERM.REVIEW_FINAL, label: '最终审批' },
+    ]},
+    { id: 6, label: '资产台账', children: [
+      { id: PERM.ASSETS_VIEW,   label: '查看' },
+      { id: PERM.ASSETS_EDIT,   label: '编辑' },
+      { id: PERM.ASSETS_EXPORT, label: '导出' },
+    ]},
+    { id: 7, label: '报表中心', children: [
+      { id: PERM.REPORTS_VIEW, label: '查看报表' },
+    ]},
   ]},
-  { id: 2, label: '清查盘点', children: [
-    { id: PERM.INVENTORY_VIEW,  label: '查看' },
-    { id: PERM.INVENTORY_INPUT, label: '录入盘点数据' },
-    { id: PERM.INVENTORY_DIFF,  label: '处理差异' },
+  { id: 9, label: '会计', children: [
+    { id: PERM.ACCOUNTING_VIEW,   label: '查看' },
+    { id: PERM.ACCOUNTING_EDIT,   label: '编辑' },
+    { id: PERM.ACCOUNTING_EXPORT, label: '导出' },
   ]},
-  { id: 3, label: '资料收集', children: [
-    { id: PERM.COLLECTION_VIEW,   label: '查看' },
-    { id: PERM.COLLECTION_UPLOAD, label: '上传资料' },
-    { id: PERM.COLLECTION_DELETE, label: '删除资料' },
+  { id: 10, label: '工程核算', children: [
+    { id: PERM.ENGINEERING_VIEW,   label: '查看' },
+    { id: PERM.ENGINEERING_EDIT,   label: '编辑' },
+    { id: PERM.ENGINEERING_EXPORT, label: '导出' },
   ]},
-  { id: 4, label: '评定估算', children: [
-    { id: PERM.ESTIMATION_VIEW,  label: '查看' },
-    { id: PERM.ESTIMATION_INPUT, label: '录入估算' },
-    { id: PERM.ESTIMATION_EDIT,  label: '修改估算' },
-  ]},
-  { id: 5, label: '审核审批', children: [
-    { id: PERM.REVIEW_VIEW,  label: '查看' },
-    { id: PERM.REVIEW_L1,    label: '一级审核' },
-    { id: PERM.REVIEW_L2,    label: '二级审核' },
-    { id: PERM.REVIEW_FINAL, label: '最终审批' },
-  ]},
-  { id: 6, label: '资产台账', children: [
-    { id: PERM.ASSETS_VIEW,   label: '查看' },
-    { id: PERM.ASSETS_EDIT,   label: '编辑' },
-    { id: PERM.ASSETS_EXPORT, label: '导出' },
-  ]},
-  { id: 7, label: '报表中心', children: [
-    { id: PERM.REPORTS_VIEW, label: '查看报表' },
+  { id: 201, label: '人事', children: [
+    { id: PERM.HR_VIEW,   label: '查看' },
+    { id: PERM.HR_EDIT,   label: '编辑' },
+    { id: PERM.HR_EXPORT, label: '导出' },
   ]},
   { id: 8, label: '系统管理', children: [
     { id: PERM.ADMIN_USERS, label: '用户管理' },
@@ -175,16 +192,16 @@ function handleRoleSelect(key) {
 }
 
 function handlePermCheck() {
-  if (permTreeRef.value) {
-    rolePermissions.value[selectedRole.value] = permTreeRef.value.getCheckedKeys()
-    unsaved.value = true
-  }
+  unsaved.value = true
 }
 
 async function savePermissions() {
+  if (!permTreeRef.value) return
+  const perms = permTreeRef.value.getCheckedKeys(true)
   saving.value = true
   try {
-    await roleApi.savePermissions(selectedRole.value, rolePermissions.value[selectedRole.value])
+    await roleApi.savePermissions(selectedRole.value, perms)
+    rolePermissions.value[selectedRole.value] = perms
     unsaved.value = false
     ElMessage.success('权限已保存')
   } catch {
