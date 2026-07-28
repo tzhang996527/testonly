@@ -57,7 +57,7 @@
                 {{ item.label }}
               </el-tag>
               <el-progress
-                :percentage="Math.round(item.count / (dashboard?.stats?.totalProjects || 1) * 100)"
+                :percentage="Math.round(item.count / (dashboard?.projectsByStatus?.reduce((s, i) => s + i.count, 0) || 1) * 100)"
                 :stroke-width="12"
                 :color="progressColors[item.status]"
                 style="flex:1;margin:0 12px"

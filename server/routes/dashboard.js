@@ -20,12 +20,20 @@ const STAGE_LABELS = {
 router.get('/', async (req, res) => {
   const currentUsername = req.user?.username || ''
 
-  const rows = await db.select().from(projects)
+  const [rows, allNodes] = await Promise.all([
+    db.select().from(projects),
+    db.select().from(approvalNodes),
+  ])
+  const now = new Date()
+  const thisMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const pendingApproval = new Set(
+    allNodes.filter(n => n.nodeStatus === 'pending').map(n => n.projectId)
+  ).size
   const stats = {
     totalProjects:      rows.length,
     inProgressProjects: rows.filter(p => p.status === 'inProgress').length,
-    pendingApproval:    rows.filter(p => ['draft','reviewing'].includes(p.status)).length,
-    completedThisMonth: rows.filter(p => p.status === 'archived').length,
+    pendingApproval,
+    completedThisMonth: rows.filter(p => p.status === 'archived' && p.updatedAt?.startsWith(thisMonthPrefix)).length,
   }
   const projectsByStatus = [
     { status: 'draft',      count: rows.filter(p => p.status === 'draft').length,      label: '草稿' },
@@ -38,7 +46,6 @@ router.get('/', async (req, res) => {
   // myTasks: find nodes where it's this user's turn (all prior nodes in stage must be approved)
   let myTasks = []
   if (currentUsername) {
-    const allNodes = await db.select().from(approvalNodes)
     const projectMap = Object.fromEntries(rows.map(p => [p.id, p]))
 
     // group by projectId+stage, sorted by nodeIndex
