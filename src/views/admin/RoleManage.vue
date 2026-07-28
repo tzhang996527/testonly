@@ -163,9 +163,11 @@ const permTree = [
     { id: PERM.HR_EXPORT, label: '导出' },
   ]},
   { id: 8, label: '系统管理', children: [
-    { id: PERM.ADMIN_USERS, label: '用户管理' },
-    { id: PERM.ADMIN_ROLES, label: '角色管理' },
-    { id: PERM.ADMIN_FLOW,  label: '流程配置' },
+    { id: PERM.ADMIN_USERS,        label: '用户管理' },
+    { id: PERM.ADMIN_ROLES,        label: '角色管理' },
+    { id: PERM.ADMIN_FLOW,         label: '流程配置' },
+    { id: PERM.CHANGE_LOGS_VIEW,   label: '变更记录查看' },
+    { id: PERM.CHANGE_LOGS_DELETE, label: '变更记录删除' },
   ]},
 ]
 

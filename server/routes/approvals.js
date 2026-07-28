@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
 import { approvalNodes, projects } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
+import { logChange } from '../utils/changeLog.js'
 
 const router = Router()
 
@@ -79,6 +80,21 @@ router.post('/:projectId/:stage/approve', async (req, res) => {
   await db.update(approvalNodes)
     .set({ approvers: JSON.stringify(approvers), nodeStatus })
     .where(eq(approvalNodes.id, node.id))
+
+  await logChange(req, {
+    entityType: 'approval',
+    entityId:   node.id,
+    projectId,
+    action:     'update',
+    fieldChanges: [
+      { field: 'stage',      fieldLabel: '审批阶段',   oldValue: null, newValue: stage },
+      { field: 'role',       fieldLabel: '审批角色',   oldValue: null, newValue: role },
+      { field: 'approver',   fieldLabel: '审批人',     oldValue: null, newValue: username },
+      { field: 'decision',   fieldLabel: '审批结果',   oldValue: 'pending', newValue: action },
+      { field: 'comment',    fieldLabel: '审批意见',   oldValue: null, newValue: comment || '' },
+      { field: 'nodeStatus', fieldLabel: '节点状态',   oldValue: node.nodeStatus, newValue: nodeStatus },
+    ],
+  })
 
   // if all nodes in this stage approved and it's the overview stage, update project status
   const updatedRows = await db.select().from(approvalNodes)

@@ -198,3 +198,18 @@ export const trackingRecords = sqliteTable('tracking_records', {
   recorder:  text('recorder'),
   createdAt: text('created_at'),
 })
+
+// ── Change audit log ──────────────────────────────────────────────────────────
+export const changeLogs = sqliteTable('change_logs', {
+  id:               text('id').primaryKey(),
+  entityType:       text('entity_type').notNull(),   // 'project' | 'asset' | 'inventory_item' | stage keys
+  entityId:         text('entity_id').notNull(),
+  projectId:        text('project_id'),              // denormalized for fast per-project queries
+  action:           text('action').notNull(),         // 'create' | 'update' | 'delete'
+  fieldChanges:     text('field_changes').notNull().default('[]'), // JSON: [{field,fieldLabel,oldValue,newValue}]
+  operatorId:       text('operator_id'),
+  operatorName:     text('operator_name'),
+  operatorUsername: text('operator_username'),
+  operatorIp:       text('operator_ip'),
+  operatedAt:       text('operated_at').notNull(),
+})

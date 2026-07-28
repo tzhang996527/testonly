@@ -35,7 +35,8 @@ const routes = [
           { path: 'review',       name: 'Review',          component: () => import('@/views/project/tabs/ReviewApproval.vue') },
           { path: 'confirmation', name: 'Confirmation',    component: () => import('@/views/project/tabs/Confirmation.vue') },
           { path: 'archive',      name: 'Archive',         component: () => import('@/views/project/tabs/Archive.vue') },
-          { path: 'tracking',     name: 'Tracking',        component: () => import('@/views/project/tabs/Tracking.vue') },
+          { path: 'tracking',        name: 'Tracking',       component: () => import('@/views/project/tabs/Tracking.vue') },
+          { path: 'change-history',  name: 'ChangeHistory',  component: () => import('@/views/project/tabs/ChangeHistory.vue') },
         ],
       },
       // Assets
@@ -53,6 +54,7 @@ const routes = [
       { path: 'admin/roles',       name: 'RoleManage',   component: () => import('@/views/admin/RoleManage.vue'),   meta: { permId: PERM.ADMIN_ROLES } },
       { path: 'admin/flow-config', name: 'FlowConfig',   component: () => import('@/views/admin/FlowConfig.vue'),   meta: { permId: PERM.ADMIN_FLOW } },
       { path: 'admin/config',      name: 'ConfigCenter', component: () => import('@/views/admin/ConfigCenter.vue'), meta: { adminOnly: true } },
+      { path: 'admin/change-logs', name: 'ChangeLogs',   component: () => import('@/views/admin/ChangeLogs.vue'),   meta: { permId: PERM.CHANGE_LOGS_VIEW } },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },

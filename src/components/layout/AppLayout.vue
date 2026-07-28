@@ -54,7 +54,7 @@
           <template #title>人事</template>
         </el-menu-item>
 
-        <el-sub-menu v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_USERS) || authStore.hasPerm(PERM.ADMIN_ROLES) || authStore.hasPerm(PERM.ADMIN_FLOW)" index="admin">
+        <el-sub-menu v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_USERS) || authStore.hasPerm(PERM.ADMIN_ROLES) || authStore.hasPerm(PERM.ADMIN_FLOW) || authStore.hasPerm(PERM.CHANGE_LOGS_VIEW)" index="admin">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>{{ t('nav.admin') }}</span>
@@ -63,6 +63,7 @@
           <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_ROLES)" index="/admin/roles">{{ t('nav.roleManage') }}</el-menu-item>
           <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_FLOW)" index="/admin/flow-config">{{ t('nav.flowConfig') }}</el-menu-item>
           <el-menu-item v-if="authStore.isAdmin" index="/admin/config">配置中心</el-menu-item>
+          <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.CHANGE_LOGS_VIEW)" index="/admin/change-logs">变更记录</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

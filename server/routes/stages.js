@@ -7,18 +7,19 @@ import {
   stageArchive, trackingRecords,
 } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
+import { logChange, diffFields } from '../utils/changeLog.js'
 
 const router = Router()
 
 // table and JSON columns per stage
 const STAGE_CONFIG = {
-  'pre-work':    { table: stagePreWork,    json: ['members', 'erpStatus'] },
-  inventory:     { table: stageInventory,  json: ['erpStatus'] },
-  collection:    { table: stageCollection, json: ['erpStatus'] },
-  estimation:    { table: stageEstimation, json: ['erpStatus'] },
-  review:        { table: stageReview,     json: ['erpStatus'] },
-  confirmation:  { table: stageConfirmation, json: [] },
-  archive:       { table: stageArchive,    json: [] },
+  'pre-work':    { table: stagePreWork,      json: ['members', 'erpStatus'], entityType: 'stage_pre_work' },
+  inventory:     { table: stageInventory,    json: ['erpStatus'],            entityType: 'stage_inventory' },
+  collection:    { table: stageCollection,   json: ['erpStatus'],            entityType: 'stage_collection' },
+  estimation:    { table: stageEstimation,   json: ['erpStatus'],            entityType: 'stage_estimation' },
+  review:        { table: stageReview,       json: ['erpStatus'],            entityType: 'stage_review' },
+  confirmation:  { table: stageConfirmation, json: [],                       entityType: 'stage_confirmation' },
+  archive:       { table: stageArchive,      json: [],                       entityType: 'stage_archive' },
 }
 
 function parseRow(row, jsonFields) {
@@ -70,6 +71,14 @@ router.put('/:projectId/:stage', async (req, res) => {
   } else {
     await db.insert(cfg.table).values(payload)
   }
+
+  await logChange(req, {
+    entityType: cfg.entityType,
+    entityId:   projectId,
+    projectId,
+    action:     existing ? 'update' : 'create',
+    fieldChanges: diffFields(existing, payload, cfg.entityType),
+  })
 
   const [updated] = await db.select().from(cfg.table).where(eq(cfg.table.projectId, projectId))
   res.json({ data: parseRow(updated, cfg.json) })

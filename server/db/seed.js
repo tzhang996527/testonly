@@ -200,6 +200,20 @@ CREATE TABLE IF NOT EXISTS roles (
   permissions TEXT NOT NULL DEFAULT '[]',
   sort_order INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS change_logs (
+  id TEXT PRIMARY KEY,
+  entity_type TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  project_id TEXT,
+  action TEXT NOT NULL,
+  field_changes TEXT NOT NULL DEFAULT '[]',
+  operator_id TEXT,
+  operator_name TEXT,
+  operator_username TEXT,
+  operator_ip TEXT,
+  operated_at TEXT NOT NULL
+);
 `)
 
 // ── Seed data ──────────────────────────────────────────────

@@ -67,9 +67,10 @@ const allTabs = [
   { label: '结果确认', name: 'confirmation' },
   { label: '报告归档', name: 'archive' },
   { label: '后续跟踪', name: 'tracking' },
+  { label: '变更记录', name: 'change-history' },
 ]
 const visibleTabs = computed(() =>
-  allTabs.filter((_, i) => (project.value?.currentStep || 1) > i)
+  allTabs.filter((tab, i) => tab.name === 'change-history' || (project.value?.currentStep || 1) > i)
 )
 const tabRouteMap = allTabs.map(t => t.name)
 const activeTab = ref(route.path.split('/').at(-1) || 'overview')

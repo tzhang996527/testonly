@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
 import { projects, documents, approvalNodes, stagePreWork, stageReview } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
+import { logChange, diffFields } from '../utils/changeLog.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const UPLOADS_DIR = path.join(__dirname, '../../uploads')
@@ -76,6 +77,12 @@ router.post('/', async (req, res) => {
   }
   await db.insert(projects).values(newProject)
 
+  await logChange(req, {
+    entityType: 'project', entityId: newId, projectId: newId,
+    action: 'create',
+    fieldChanges: diffFields(null, newProject, 'project'),
+  })
+
   // create overview approval_nodes
   const defaultFlow = [
     { role: '部门负责人', approvers: [{ name: '李经理', username: 'li.manager' }] },
@@ -103,6 +110,13 @@ router.patch('/:id', async (req, res) => {
   if (!existing) return res.status(404).json({ message: 'Not found' })
   await db.update(projects).set(req.body).where(eq(projects.id, req.params.id))
   const [updated] = await db.select().from(projects).where(eq(projects.id, req.params.id))
+
+  await logChange(req, {
+    entityType: 'project', entityId: req.params.id, projectId: req.params.id,
+    action: 'update',
+    fieldChanges: diffFields(existing, updated, 'project'),
+  })
+
   const approvals = await loadApprovals(req.params.id)
   res.json({ data: { ...parse(updated), approvalsByStage: approvals } })
 })
@@ -130,13 +144,20 @@ router.post('/:id/save-prework', async (req, res) => {
     updatedAt:  now,
   }
 
-  const [existing] = await db.select().from(stagePreWork).where(eq(stagePreWork.projectId, req.params.id))
-  if (existing) {
+  const [existingPreWork] = await db.select().from(stagePreWork).where(eq(stagePreWork.projectId, req.params.id))
+  if (existingPreWork) {
     const { projectId: _, ...updates } = payload
     await db.update(stagePreWork).set(updates).where(eq(stagePreWork.projectId, req.params.id))
   } else {
     await db.insert(stagePreWork).values(payload)
   }
+
+  await logChange(req, {
+    entityType: 'stage_pre_work', entityId: req.params.id, projectId: req.params.id,
+    action: existingPreWork ? 'update' : 'create',
+    fieldChanges: diffFields(existingPreWork, payload, 'stage_pre_work'),
+  })
+
   await db.delete(approvalNodes).where(
     and(eq(approvalNodes.projectId, req.params.id), eq(approvalNodes.stage, 'pre-work'))
   )
@@ -169,13 +190,19 @@ router.post('/:id/save-review', async (req, res) => {
   }
   const payload = { projectId: req.params.id, erpStatus: json(erpStatus || []), updatedAt: now }
 
-  const [existing] = await db.select().from(stageReview).where(eq(stageReview.projectId, req.params.id))
-  if (existing) {
+  const [existingReview] = await db.select().from(stageReview).where(eq(stageReview.projectId, req.params.id))
+  if (existingReview) {
     await db.update(stageReview).set({ erpStatus: payload.erpStatus, updatedAt: now })
       .where(eq(stageReview.projectId, req.params.id))
   } else {
     await db.insert(stageReview).values(payload)
   }
+
+  await logChange(req, {
+    entityType: 'stage_review', entityId: req.params.id, projectId: req.params.id,
+    action: existingReview ? 'update' : 'create',
+    fieldChanges: diffFields(existingReview, payload, 'stage_review'),
+  })
 
   await db.delete(approvalNodes).where(
     and(eq(approvalNodes.projectId, req.params.id), eq(approvalNodes.stage, 'review'))
@@ -211,6 +238,12 @@ router.post('/:id/advance-step', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const [existing] = await db.select().from(projects).where(eq(projects.id, req.params.id))
   if (!existing) return res.status(404).json({ message: 'Not found' })
+
+  await logChange(req, {
+    entityType: 'project', entityId: req.params.id, projectId: req.params.id,
+    action: 'delete',
+    fieldChanges: [],
+  })
 
   const docs = await db.select().from(documents).where(eq(documents.projectId, req.params.id))
   for (const doc of docs) {

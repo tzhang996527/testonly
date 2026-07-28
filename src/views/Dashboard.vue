@@ -23,6 +23,7 @@
             <el-badge :value="dashboard?.myTasks?.length" type="danger" style="margin-left:8px" />
           </template>
           <el-table :data="dashboard?.myTasks" size="small" stripe>
+            <el-table-column label="项目编号" prop="projectNo" width="140" />
             <el-table-column label="任务" prop="title" min-width="200" />
             <el-table-column label="类型" prop="type" width="100">
               <template #default="{ row }">

@@ -134,3 +134,10 @@ export const configApi = {
 export const dashboardApi = {
   get: () => http.get('/dashboard').then(r => r.data),
 }
+
+// ── Change Logs ──────────────────────────────────────────────
+export const changeLogApi = {
+  list:   (params = {}) => http.get('/change-logs', { params }).then(r => r.data),
+  get:    (id)          => http.get(`/change-logs/${id}`).then(r => r.data),
+  remove: (id)          => http.delete(`/change-logs/${id}`).then(r => r.data),
+}
