@@ -13,6 +13,8 @@ export const projects = sqliteTable('projects', {
   remark:        text('remark'),
   createdAt:     text('created_at'),
   createdBy:     text('created_by'),
+  budgetHours:   real('budget_hours').default(0),   // 预算工时（小时）
+  actualHours:   real('actual_hours').default(0),   // 实际用时（小时）
 })
 
 // One row per approval node per stage per project.
@@ -197,6 +199,44 @@ export const trackingRecords = sqliteTable('tracking_records', {
   content:   text('content'),
   recorder:  text('recorder'),
   createdAt: text('created_at'),
+})
+
+// ── Work log: weekly plans & summaries ───────────────────────────────────────
+
+// One plan+summary record per user per week (identified by weekStart YYYY-MM-DD Monday)
+export const workWeeklyLogs = sqliteTable('work_weekly_logs', {
+  id:          text('id').primaryKey(),
+  userId:      text('user_id').notNull(),
+  userName:    text('user_name'),
+  weekStart:   text('week_start').notNull(),  // Monday date YYYY-MM-DD
+  // next-week plan (filled on Friday for next week)
+  planNote:    text('plan_note').default(''), // free-text overall plan note
+  // this-week summary (filled on Friday for current week)
+  summaryNote: text('summary_note').default(''),
+  createdAt:   text('created_at'),
+  updatedAt:   text('updated_at'),
+})
+
+// Individual daily entries within a plan (one row per project-day)
+export const workPlanEntries = sqliteTable('work_plan_entries', {
+  id:              text('id').primaryKey(),
+  weeklyLogId:     text('weekly_log_id').notNull(),
+  userId:          text('user_id').notNull(),
+  weekStart:       text('week_start').notNull(),
+  entryDate:       text('entry_date').notNull(),     // YYYY-MM-DD
+  projectId:       text('project_id'),               // null = non-project work
+  projectNo:       text('project_no'),
+  projectName:     text('project_name'),             // denormalized purpose for display
+  workType:        text('work_type').default('office'), // 'office' | 'field'
+  plannedHours:    real('planned_hours').default(0),
+  actualHours:     real('actual_hours').default(0),
+  plannedProgress: real('planned_progress').default(0), // % 0-100
+  actualProgress:  real('actual_progress').default(0),
+  note:            text('note').default(''),
+  delayReason:     text('delay_reason').default(''),  // if actual < planned
+  entryType:       text('entry_type').default('plan'), // 'plan' | 'summary'
+  createdAt:       text('created_at'),
+  updatedAt:       text('updated_at'),
 })
 
 // ── Change audit log ──────────────────────────────────────────────────────────

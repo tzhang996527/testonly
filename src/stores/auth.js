@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isLoggedIn: (state) => !!state.token,
+    userId:     (state) => state.user?.id   || '',
     userName:   (state) => state.user?.name || '',
     userRoles:  (state) => state.user?.roles || [],
     userRole:   (state) => (state.user?.roles || [])[0] || '',  // legacy compat

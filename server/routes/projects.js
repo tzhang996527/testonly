@@ -74,6 +74,7 @@ router.post('/', async (req, res) => {
     purpose: payload.purpose, baseDate: payload.baseDate,
     assetCategory: payload.assetCategory, responsible: payload.responsible,
     department: payload.department, remark: payload.remark || '',
+    budgetHours: payload.budgetHours || 0, actualHours: 0,
   }
   await db.insert(projects).values(newProject)
 

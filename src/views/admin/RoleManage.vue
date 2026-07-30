@@ -162,6 +162,11 @@ const permTree = [
     { id: PERM.HR_EDIT,   label: '编辑' },
     { id: PERM.HR_EXPORT, label: '导出' },
   ]},
+  { id: 202, label: '工作日志', children: [
+    { id: PERM.WORKLOG_VIEW,     label: '查看自己的日志' },
+    { id: PERM.WORKLOG_EDIT,     label: '填写日志' },
+    { id: PERM.WORKLOG_VIEW_ALL, label: '全员概览' },
+  ]},
   { id: 8, label: '系统管理', children: [
     { id: PERM.ADMIN_USERS,        label: '用户管理' },
     { id: PERM.ADMIN_ROLES,        label: '角色管理' },

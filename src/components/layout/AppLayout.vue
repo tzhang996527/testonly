@@ -54,6 +54,16 @@
           <template #title>人事</template>
         </el-menu-item>
 
+        <el-sub-menu v-if="authStore.isAdmin || authStore.hasPerm(PERM.WORKLOG_VIEW) || authStore.hasPerm(PERM.WORKLOG_VIEW_ALL)" index="worklog">
+          <template #title>
+            <el-icon><Calendar /></el-icon>
+            <span>工作日志</span>
+          </template>
+          <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.WORKLOG_VIEW)" index="/worklog">日志列表</el-menu-item>
+          <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.WORKLOG_EDIT)" index="/worklog/weekly">填写日志</el-menu-item>
+          <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.WORKLOG_VIEW_ALL)" index="/worklog/overview">全员概览</el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu v-if="authStore.isAdmin || authStore.hasPerm(PERM.ADMIN_USERS) || authStore.hasPerm(PERM.ADMIN_ROLES) || authStore.hasPerm(PERM.ADMIN_FLOW) || authStore.hasPerm(PERM.CHANGE_LOGS_VIEW)" index="admin">
           <template #title>
             <el-icon><Setting /></el-icon>
@@ -128,7 +138,7 @@ import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import {
   Odometer, Document, Box, TrendCharts, Setting, Fold, Expand,
-  Bell, ArrowDown, DataAnalysis, Money, Histogram, User,
+  Bell, ArrowDown, DataAnalysis, Money, Histogram, User, Calendar,
 } from '@element-plus/icons-vue'
 import { PERM } from '@/constants/permissions.js'
 
@@ -147,6 +157,7 @@ const routeTitleMap = {
   project: '评估立项',
   assets: '资产台账',
   reports: '报表中心',
+  worklog: '工作日志',
   admin: '系统管理',
 }
 

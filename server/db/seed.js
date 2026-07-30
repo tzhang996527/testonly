@@ -214,7 +214,43 @@ CREATE TABLE IF NOT EXISTS change_logs (
   operator_ip TEXT,
   operated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS work_weekly_logs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  user_name TEXT,
+  week_start TEXT NOT NULL,
+  plan_note TEXT DEFAULT '',
+  summary_note TEXT DEFAULT '',
+  created_at TEXT,
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS work_plan_entries (
+  id TEXT PRIMARY KEY,
+  weekly_log_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  week_start TEXT NOT NULL,
+  entry_date TEXT NOT NULL,
+  project_id TEXT,
+  project_no TEXT,
+  project_name TEXT,
+  work_type TEXT DEFAULT 'office',
+  planned_hours REAL DEFAULT 0,
+  actual_hours REAL DEFAULT 0,
+  planned_progress REAL DEFAULT 0,
+  actual_progress REAL DEFAULT 0,
+  note TEXT DEFAULT '',
+  delay_reason TEXT DEFAULT '',
+  entry_type TEXT DEFAULT 'plan',
+  created_at TEXT,
+  updated_at TEXT
+);
 `)
+
+// Add budget_hours / actual_hours to projects if not yet present (safe migration)
+try { sqlite.exec(`ALTER TABLE projects ADD COLUMN budget_hours REAL DEFAULT 0`) } catch {}
+try { sqlite.exec(`ALTER TABLE projects ADD COLUMN actual_hours REAL DEFAULT 0`) }  catch {}
 
 // ── Seed data ──────────────────────────────────────────────
 const mockProjects = [
@@ -432,19 +468,19 @@ for (const m of methodData) insertMethod.run(m.id, m.name, m.sortOrder)
 // seed roles
 const rolesData = [
   { id: 'r1', key: 'admin',         label: '系统管理员',   tagType: 'danger',  sortOrder: 1,
-    permissions: [11,12,13,14,21,22,23,31,32,33,41,42,43,51,52,53,54,61,62,63,71,72,73] },
+    permissions: [11,12,13,14,21,22,23,31,32,33,41,42,43,51,52,53,54,61,62,63,71,72,73,74,75,121,122,123] },
   { id: 'r2', key: 'assessor',      label: '评估专业人员', tagType: 'primary', sortOrder: 2,
-    permissions: [11,12,13,14,21,22,23,31,32,41,42,61,63] },
+    permissions: [11,12,13,14,21,22,23,31,32,41,42,61,63,121,122] },
   { id: 'r3', key: 'deptManager',   label: '部门负责人',   tagType: 'warning', sortOrder: 3,
-    permissions: [11,13,21,22,23,31,32,41,42,43,51,52,61,62,63] },
+    permissions: [11,13,21,22,23,31,32,41,42,43,51,52,61,62,63,121,122,123] },
   { id: 'r4', key: 'chiefEngineer', label: '总师室',       tagType: 'warning', sortOrder: 4,
-    permissions: [11,13,21,22,23,31,32,41,42,43,51,52,53,61,62,63] },
+    permissions: [11,13,21,22,23,31,32,41,42,43,51,52,53,61,62,63,121,122,123] },
   { id: 'r5', key: 'ceo',           label: '总经理',       tagType: 'success', sortOrder: 5,
-    permissions: [11,13,14,21,23,31,32,41,43,51,52,53,54,61,62,63] },
+    permissions: [11,13,14,21,23,31,32,41,43,51,52,53,54,61,62,63,121,122,123] },
   { id: 'r6', key: 'riskControl',   label: '风控',         tagType: '',        sortOrder: 6,
-    permissions: [11,13,14,21,31,41,51,52,61] },
+    permissions: [11,13,14,21,31,41,51,52,61,121] },
   { id: 'r7', key: 'office',        label: '办公室',       tagType: '',        sortOrder: 7,
-    permissions: [11,12,13,14,21,31,41,51] },
+    permissions: [11,12,13,14,21,31,41,51,121] },
 ]
 const insertRole = sqlite.prepare(`
   INSERT OR IGNORE INTO roles (id, key, label, tag_type, permissions, sort_order)

@@ -42,6 +42,10 @@
         <el-form-item :label="t('common.remark')">
           <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="备注说明" />
         </el-form-item>
+        <el-form-item label="预算工时">
+          <el-input-number v-model="form.budgetHours" :min="0" :step="4" placeholder="0" style="width:160px" />
+          <span style="margin-left:8px;color:#9ca3af;font-size:13px">小时（简单项目约20h，复杂项目约40h）</span>
+        </el-form-item>
 
         <el-divider>底稿上传（选填）</el-divider>
         <el-form-item
@@ -143,6 +147,7 @@ const form = reactive({
   responsible: '',
   department: '资产评估部',
   remark: '',
+  budgetHours: 20,
 })
 
 const scratchDocs = [

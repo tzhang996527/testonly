@@ -41,6 +41,12 @@
             </el-descriptions-item>
             <el-descriptions-item :label="t('common.createdAt')">{{ project?.createdAt }}</el-descriptions-item>
             <el-descriptions-item :label="t('common.remark')" :span="2">{{ project?.remark }}</el-descriptions-item>
+            <el-descriptions-item label="预算工时">
+              {{ project?.budgetHours ? project.budgetHours + ' 小时' : '未设置' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="实际用时">
+              {{ project?.actualHours ? project.actualHours + ' 小时' : '—' }}
+            </el-descriptions-item>
           </el-descriptions>
 
           <!-- edit mode -->
@@ -79,6 +85,10 @@
             </el-form-item>
             <el-form-item :label="t('common.remark')">
               <el-input v-model="editForm.remark" type="textarea" :rows="3" />
+            </el-form-item>
+            <el-form-item label="预算工时">
+              <el-input-number v-model="editForm.budgetHours" :min="0" :step="4" style="width:160px" />
+              <span style="margin-left:8px;color:#9ca3af;font-size:13px">小时</span>
             </el-form-item>
           </el-form>
 
@@ -189,7 +199,7 @@ const attachments = reactive({
 
 const editForm = reactive({
   purpose: '', baseDate: '', assetCategory: '',
-  responsible: '', department: '', remark: '',
+  responsible: '', department: '', remark: '', budgetHours: 0,
 })
 
 async function startEdit() {
@@ -200,6 +210,7 @@ async function startEdit() {
   editForm.responsible  = p.responsible  || ''
   editForm.department   = p.department   || ''
   editForm.remark       = p.remark       || ''
+  editForm.budgetHours  = p.budgetHours ?? 0
   pendingDeletes.value  = []
 
   // load existing files

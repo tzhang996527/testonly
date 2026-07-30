@@ -14,6 +14,7 @@ import configRouter      from './routes/config.js'
 import flowConfigRouter  from './routes/flowConfig.js'
 import rolesRouter       from './routes/roles.js'
 import changeLogsRouter  from './routes/changeLogs.js'
+import worklogRouter     from './routes/worklog.js'
 import { authMiddleware } from './middleware/auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -44,6 +45,7 @@ app.use('/api/config',       configRouter)
 app.use('/api/flow-configs', flowConfigRouter)
 app.use('/api/roles',        rolesRouter)
 app.use('/api/change-logs',  changeLogsRouter)
+app.use('/api/worklog',      worklogRouter)
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)

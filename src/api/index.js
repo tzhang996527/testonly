@@ -141,3 +141,18 @@ export const changeLogApi = {
   get:    (id)          => http.get(`/change-logs/${id}`).then(r => r.data),
   remove: (id)          => http.delete(`/change-logs/${id}`).then(r => r.data),
 }
+
+// ── Work Log ──────────────────────────────────────────────────
+export const worklogApi = {
+  listWeeks:      (params = {})      => http.get('/worklog/weeks', { params }).then(r => r.data),
+  getWeek:        (id)               => http.get(`/worklog/weeks/${id}`).then(r => r.data),
+  getCurrentWeek: (params = {})      => http.get('/worklog/current', { params }).then(r => r.data),
+  getWeekByDate:  (params = {})      => http.get('/worklog/week-by-date', { params }).then(r => r.data),
+  saveWeekNotes:  (id, data)         => http.put(`/worklog/weeks/${id}`, data).then(r => r.data),
+  getOverview:    (params = {})      => http.get('/worklog/overview', { params }).then(r => r.data),
+  getProjectHours:(projectId)        => http.get(`/worklog/project-hours/${projectId}`).then(r => r.data),
+
+  addEntry:    (data)      => http.post('/worklog/entries', data).then(r => r.data),
+  updateEntry: (id, data)  => http.patch(`/worklog/entries/${id}`, data).then(r => r.data),
+  deleteEntry: (id)        => http.delete(`/worklog/entries/${id}`).then(r => r.data),
+}

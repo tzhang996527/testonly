@@ -49,6 +49,10 @@ const routes = [
       { path: 'engineering', name: 'Engineering', component: () => import('@/views/engineering/Engineering.vue'), meta: { permId: PERM.ENGINEERING_VIEW } },
       // HR
       { path: 'hr', name: 'HR', component: () => import('@/views/hr/HR.vue'), meta: { permId: PERM.HR_VIEW } },
+      // Work Log
+      { path: 'worklog',        name: 'WorkLogList', component: () => import('@/views/worklog/WorkLogList.vue'), meta: { permId: PERM.WORKLOG_VIEW } },
+      { path: 'worklog/weekly', name: 'WorkLogForm', component: () => import('@/views/worklog/WorkLogForm.vue'), meta: { permId: PERM.WORKLOG_EDIT } },
+      { path: 'worklog/overview', name: 'WorkLogOverview', component: () => import('@/views/worklog/WorkLogOverview.vue'), meta: { permId: PERM.WORKLOG_VIEW_ALL } },
       // Admin — require specific permission IDs
       { path: 'admin/users',       name: 'UserManage',   component: () => import('@/views/admin/UserManage.vue'),   meta: { permId: PERM.ADMIN_USERS } },
       { path: 'admin/roles',       name: 'RoleManage',   component: () => import('@/views/admin/RoleManage.vue'),   meta: { permId: PERM.ADMIN_ROLES } },

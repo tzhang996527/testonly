@@ -50,6 +50,11 @@ export const PERM = {
   HR_EDIT:   112,
   HR_EXPORT: 113,
 
+  // ── 工作日志 ──────────────────────────────────────
+  WORKLOG_VIEW:     121,
+  WORKLOG_EDIT:     122,
+  WORKLOG_VIEW_ALL: 123,
+
   // ── 系统管理 ─────────────────────────────────────
   ADMIN_USERS: 71,
   ADMIN_ROLES: 72,
