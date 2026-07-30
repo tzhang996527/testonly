@@ -22,7 +22,7 @@
     </el-card>
 
     <!-- Tab Navigation -->
-    <el-tabs v-model="activeTab" @tab-click="handleTabClick" type="border-card">
+    <el-tabs v-model="activeTab" @tab-click="handleTabClick" type="card">
       <el-tab-pane
         v-for="tab in visibleTabs"
         :key="tab.name"
@@ -169,5 +169,16 @@ onMounted(async () => {
 
 .tab-content {
   margin-top: 16px;
+}
+
+:deep(.el-tabs--card > .el-tabs__header .el-tabs__item.is-active) {
+  background-color: var(--el-color-primary);
+  color: #ffffff;
+  border-bottom-color: var(--el-color-primary);
+  font-weight: 600;
+}
+
+:deep(.el-tabs--card > .el-tabs__header .el-tabs__item:not(.is-active):hover) {
+  color: var(--el-color-primary);
 }
 </style>
