@@ -54,6 +54,11 @@
           <template #title>人事</template>
         </el-menu-item>
 
+        <el-menu-item v-if="authStore.isAdmin || authStore.hasPerm(PERM.EXPERT_VIEW)" index="/expert">
+          <el-icon><Avatar /></el-icon>
+          <template #title>专家管理</template>
+        </el-menu-item>
+
         <el-sub-menu v-if="authStore.isAdmin || authStore.hasPerm(PERM.WORKLOG_VIEW) || authStore.hasPerm(PERM.WORKLOG_VIEW_ALL)" index="worklog">
           <template #title>
             <el-icon><Calendar /></el-icon>
@@ -138,7 +143,7 @@ import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import {
   Odometer, Document, Box, TrendCharts, Setting, Fold, Expand,
-  Bell, ArrowDown, DataAnalysis, Money, Histogram, User, Calendar,
+  Bell, ArrowDown, DataAnalysis, Money, Histogram, User, Calendar, Avatar,
 } from '@element-plus/icons-vue'
 import { PERM } from '@/constants/permissions.js'
 

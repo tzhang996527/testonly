@@ -55,6 +55,11 @@ export const PERM = {
   WORKLOG_EDIT:     122,
   WORKLOG_VIEW_ALL: 123,
 
+  // ── G-7 专家管理 ──────────────────────────────────
+  EXPERT_VIEW:   131,
+  EXPERT_EDIT:   132,
+  EXPERT_DELETE: 133,
+
   // ── 系统管理 ─────────────────────────────────────
   ADMIN_USERS: 71,
   ADMIN_ROLES: 72,

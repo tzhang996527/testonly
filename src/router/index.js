@@ -49,6 +49,8 @@ const routes = [
       { path: 'engineering', name: 'Engineering', component: () => import('@/views/engineering/Engineering.vue'), meta: { permId: PERM.ENGINEERING_VIEW } },
       // HR
       { path: 'hr', name: 'HR', component: () => import('@/views/hr/HR.vue'), meta: { permId: PERM.HR_VIEW } },
+      // Expert (G-7)
+      { path: 'expert', name: 'ExpertManage', component: () => import('@/views/expert/ExpertManage.vue'), meta: { permId: PERM.EXPERT_VIEW } },
       // Work Log
       { path: 'worklog',        name: 'WorkLogList', component: () => import('@/views/worklog/WorkLogList.vue'), meta: { permId: PERM.WORKLOG_VIEW } },
       { path: 'worklog/weekly', name: 'WorkLogForm', component: () => import('@/views/worklog/WorkLogForm.vue'), meta: { permId: PERM.WORKLOG_EDIT } },

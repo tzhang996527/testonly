@@ -239,6 +239,38 @@ export const workPlanEntries = sqliteTable('work_plan_entries', {
   updatedAt:       text('updated_at'),
 })
 
+// ── G-7 专家（专业人员）申请表 ────────────────────────────────────────────────
+export const experts = sqliteTable('experts', {
+  id:              text('id').primaryKey(),
+  // 申请信息
+  projectName:     text('project_name').default(''),
+  problemToSolve:  text('problem_to_solve').default(''),
+  budget:          text('budget').default(''),
+  approver:        text('approver').default(''),
+  approveDate:     text('approve_date').default(''),
+  // 专家简况
+  name:            text('name').default(''),
+  gender:          text('gender').default(''),
+  birthDate:       text('birth_date').default(''),
+  education:       text('education').default(''),
+  degree:          text('degree').default(''),
+  techTitle:       text('tech_title').default(''),
+  address:         text('address').default(''),
+  phone:           text('phone').default(''),
+  email:           text('email').default(''),
+  workUnit:        text('work_unit').default(''),
+  workPhone:       text('work_phone').default(''),
+  expertise:       text('expertise').default(''),
+  experience:      text('experience').default(''),
+  remark:          text('remark').default(''),
+  // 填表信息
+  filledBy:        text('filled_by').default(''),
+  fillDate:        text('fill_date').default(''),
+  createdAt:       text('created_at'),
+  updatedAt:       text('updated_at'),
+  createdBy:       text('created_by'),
+})
+
 // ── Change audit log ──────────────────────────────────────────────────────────
 export const changeLogs = sqliteTable('change_logs', {
   id:               text('id').primaryKey(),

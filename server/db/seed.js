@@ -252,6 +252,37 @@ CREATE TABLE IF NOT EXISTS work_plan_entries (
 try { sqlite.exec(`ALTER TABLE projects ADD COLUMN budget_hours REAL DEFAULT 0`) } catch {}
 try { sqlite.exec(`ALTER TABLE projects ADD COLUMN actual_hours REAL DEFAULT 0`) }  catch {}
 
+// G-7 experts table
+sqlite.exec(`
+CREATE TABLE IF NOT EXISTS experts (
+  id TEXT PRIMARY KEY,
+  project_name TEXT DEFAULT '',
+  problem_to_solve TEXT DEFAULT '',
+  budget TEXT DEFAULT '',
+  approver TEXT DEFAULT '',
+  approve_date TEXT DEFAULT '',
+  name TEXT DEFAULT '',
+  gender TEXT DEFAULT '',
+  birth_date TEXT DEFAULT '',
+  education TEXT DEFAULT '',
+  degree TEXT DEFAULT '',
+  tech_title TEXT DEFAULT '',
+  address TEXT DEFAULT '',
+  phone TEXT DEFAULT '',
+  email TEXT DEFAULT '',
+  work_unit TEXT DEFAULT '',
+  work_phone TEXT DEFAULT '',
+  expertise TEXT DEFAULT '',
+  experience TEXT DEFAULT '',
+  remark TEXT DEFAULT '',
+  filled_by TEXT DEFAULT '',
+  fill_date TEXT DEFAULT '',
+  created_at TEXT,
+  updated_at TEXT,
+  created_by TEXT
+);
+`)
+
 // ── Seed data ──────────────────────────────────────────────
 const mockProjects = [
   {

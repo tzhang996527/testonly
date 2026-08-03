@@ -142,6 +142,15 @@ export const changeLogApi = {
   remove: (id)          => http.delete(`/change-logs/${id}`).then(r => r.data),
 }
 
+// ── Experts (G-7) ─────────────────────────────────────────────
+export const expertApi = {
+  list:   ()              => http.get('/experts').then(r => r.data),
+  get:    (id)            => http.get(`/experts/${id}`).then(r => r.data),
+  create: (data)          => http.post('/experts', data).then(r => r.data),
+  update: (id, data)      => http.put(`/experts/${id}`, data).then(r => r.data),
+  remove: (id)            => http.delete(`/experts/${id}`).then(r => r.data),
+}
+
 // ── Work Log ──────────────────────────────────────────────────
 export const worklogApi = {
   listWeeks:      (params = {})      => http.get('/worklog/weeks', { params }).then(r => r.data),
