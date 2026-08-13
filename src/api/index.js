@@ -151,6 +151,18 @@ export const expertApi = {
   remove: (id)            => http.delete(`/experts/${id}`).then(r => r.data),
 }
 
+// ── Scratch forms (底稿) G-1 / G-2 / G-28 ────────────────────────────────────
+export const scratchApi = {
+  getG1:    (projectId, stage) => http.get(`/scratch/g1/${projectId}/${stage}`).then(r => r.data),
+  saveG1:   (projectId, stage, data) => http.put(`/scratch/g1/${projectId}/${stage}`, data).then(r => r.data),
+  getG2:    (projectId, stage) => http.get(`/scratch/g2/${projectId}/${stage}`).then(r => r.data),
+  saveG2:   (projectId, stage, data) => http.put(`/scratch/g2/${projectId}/${stage}`, data).then(r => r.data),
+  listG28:  (projectId, stage) => http.get(`/scratch/g28/${projectId}/${stage}`).then(r => r.data),
+  addG28:   (projectId, stage, data) => http.post(`/scratch/g28/${projectId}/${stage}`, data).then(r => r.data),
+  updateG28:(id, data)         => http.put(`/scratch/g28/${id}`, data).then(r => r.data),
+  removeG28:(id)               => http.delete(`/scratch/g28/${id}`).then(r => r.data),
+}
+
 // ── Work Log ──────────────────────────────────────────────────
 export const worklogApi = {
   listWeeks:      (params = {})      => http.get('/worklog/weeks', { params }).then(r => r.data),

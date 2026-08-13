@@ -271,6 +271,76 @@ export const experts = sqliteTable('experts', {
   createdBy:       text('created_by'),
 })
 
+// ── Scratch forms (底稿) — G-1 / G-2 / G-28 ─────────────────────────────────
+
+// G-1 评估业务基本事项调查表 (one row per project+stage)
+export const scratchG1 = sqliteTable('scratch_g1', {
+  id:                text('id').primaryKey(),
+  projectId:         text('project_id').notNull(),
+  stage:             text('stage').notNull().default('overview'),
+  projectName:       text('project_name').default(''),
+  client:            text('client').default(''),
+  clientContact:     text('client_contact').default(''),
+  clientPhone:       text('client_phone').default(''),
+  unitName:          text('unit_name').default(''),
+  unitAddress:       text('unit_address').default(''),
+  legalRep:          text('legal_rep').default(''),
+  enterpriseType:    text('enterprise_type').default(''),
+  registeredCapital: text('registered_capital').default(''),
+  unitContact:       text('unit_contact').default(''),
+  unitPhone:         text('unit_phone').default(''),
+  businessScope:     text('business_scope').default(''),
+  otherReportUsers:  text('other_report_users').default(''),
+  relationship:      text('relationship').default(''),
+  approvalStatus:    text('approval_status').default(''),
+  importantMatters:  text('important_matters').default(''),
+  assessmentPurpose: text('assessment_purpose').default(''),
+  assessmentScope:   text('assessment_scope').default(''),
+  assetStatus:       text('asset_status').default(''),
+  valueType:         text('value_type').default(''),
+  baseDate:          text('base_date').default(''),
+  assumptions:       text('assumptions').default(''),
+  reportUsage:       text('report_usage').default(''),
+  serviceFee:        real('service_fee').default(0),
+  negotiator:        text('negotiator').default(''),
+  approver:          text('approver').default(''),
+  approveDate:       text('approve_date').default(''),
+  formFiller:        text('form_filler').default(''),
+  updatedAt:         text('updated_at'),
+})
+
+// G-2 评估项目综合评价表 (one row per project+stage)
+export const scratchG2 = sqliteTable('scratch_g2', {
+  id:             text('id').primaryKey(),
+  projectId:      text('project_id').notNull(),
+  stage:          text('stage').notNull().default('overview'),
+  section1:       text('section1').default('[]'),   // 对委托人综合评价 (6题) JSON [{q,a}]
+  section2:       text('section2').default('[]'),   // 对被评估单位综合评价 (9题)
+  section3:       text('section3').default('[]'),   // 对评估对象的综合评价 (3题)
+  section4:       text('section4').default('[]'),   // 对本机构及评估人员 (5题)
+  section5:       text('section5').default('[]'),   // 评估报告使用风险影响 (4题)
+  riskLevel:      text('risk_level').default('一般'),
+  riskDesc:       text('risk_desc').default(''),
+  accepted:       integer('accepted').default(1),
+  negotiator:     text('negotiator').default(''),
+  negotiateDate:  text('negotiate_date').default(''),
+  supervisorNote: text('supervisor_note').default(''),
+  supervisorDate: text('supervisor_date').default(''),
+  updatedAt:      text('updated_at'),
+})
+
+// G-28 项目组成员独立性调查问卷 (multiple rows per project+stage, one per member)
+export const scratchG28 = sqliteTable('scratch_g28', {
+  id:          text('id').primaryKey(),
+  projectId:   text('project_id').notNull(),
+  stage:       text('stage').notNull().default('overview'),
+  memberName:  text('member_name').default(''),
+  answers:     text('answers').default('[]'),   // JSON: ['yes'|'no'|'na', ...] 18 items
+  signDate:    text('sign_date').default(''),
+  createdAt:   text('created_at'),
+  updatedAt:   text('updated_at'),
+})
+
 // ── Change audit log ──────────────────────────────────────────────────────────
 export const changeLogs = sqliteTable('change_logs', {
   id:               text('id').primaryKey(),

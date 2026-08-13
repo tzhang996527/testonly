@@ -16,6 +16,7 @@ import rolesRouter       from './routes/roles.js'
 import changeLogsRouter  from './routes/changeLogs.js'
 import worklogRouter     from './routes/worklog.js'
 import expertsRouter     from './routes/experts.js'
+import scratchRouter     from './routes/scratch.js'
 import { authMiddleware } from './middleware/auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -48,6 +49,7 @@ app.use('/api/roles',        rolesRouter)
 app.use('/api/change-logs',  changeLogsRouter)
 app.use('/api/worklog',      worklogRouter)
 app.use('/api/experts',      expertsRouter)
+app.use('/api/scratch',      scratchRouter)
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)

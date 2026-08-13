@@ -571,5 +571,73 @@ for (const fc of flowConfigData) {
   insertFlowConfig.run(fc.id, fc.name, fc.scene, JSON.stringify(fc.nodes), fc.sortOrder, fc.enabled ?? 1)
 }
 
+// ── Scratch forms (底稿) tables ───────────────────────────────────────────────
+sqlite.exec(`
+CREATE TABLE IF NOT EXISTS scratch_g1 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'overview',
+  project_name TEXT DEFAULT '',
+  client TEXT DEFAULT '',
+  client_contact TEXT DEFAULT '',
+  client_phone TEXT DEFAULT '',
+  unit_name TEXT DEFAULT '',
+  unit_address TEXT DEFAULT '',
+  legal_rep TEXT DEFAULT '',
+  enterprise_type TEXT DEFAULT '',
+  registered_capital TEXT DEFAULT '',
+  unit_contact TEXT DEFAULT '',
+  unit_phone TEXT DEFAULT '',
+  business_scope TEXT DEFAULT '',
+  other_report_users TEXT DEFAULT '',
+  relationship TEXT DEFAULT '',
+  approval_status TEXT DEFAULT '',
+  important_matters TEXT DEFAULT '',
+  assessment_purpose TEXT DEFAULT '',
+  assessment_scope TEXT DEFAULT '',
+  asset_status TEXT DEFAULT '',
+  value_type TEXT DEFAULT '',
+  base_date TEXT DEFAULT '',
+  assumptions TEXT DEFAULT '',
+  report_usage TEXT DEFAULT '',
+  service_fee REAL DEFAULT 0,
+  negotiator TEXT DEFAULT '',
+  approver TEXT DEFAULT '',
+  approve_date TEXT DEFAULT '',
+  form_filler TEXT DEFAULT '',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS scratch_g2 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'overview',
+  section1 TEXT DEFAULT '[]',
+  section2 TEXT DEFAULT '[]',
+  section3 TEXT DEFAULT '[]',
+  section4 TEXT DEFAULT '[]',
+  section5 TEXT DEFAULT '[]',
+  risk_level TEXT DEFAULT '一般',
+  risk_desc TEXT DEFAULT '',
+  accepted INTEGER DEFAULT 1,
+  negotiator TEXT DEFAULT '',
+  negotiate_date TEXT DEFAULT '',
+  supervisor_note TEXT DEFAULT '',
+  supervisor_date TEXT DEFAULT '',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS scratch_g28 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'overview',
+  member_name TEXT DEFAULT '',
+  answers TEXT DEFAULT '[]',
+  sign_date TEXT DEFAULT '',
+  created_at TEXT,
+  updated_at TEXT
+);
+`)
+
 console.log('✅ Seed complete')
 sqlite.close()
