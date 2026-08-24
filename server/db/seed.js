@@ -693,6 +693,75 @@ CREATE TABLE IF NOT EXISTS scratch_c3 (
   reviewer TEXT DEFAULT '',
   updated_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS scratch_g10 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'review',
+  project_name TEXT DEFAULT '',
+  report_no TEXT DEFAULT '',
+  base_date TEXT DEFAULT '',
+  project_leader TEXT DEFAULT '',
+  signer TEXT DEFAULT '',
+  signer_opinion TEXT DEFAULT '',
+  manager_opinion TEXT DEFAULT '',
+  signer_sign TEXT DEFAULT '',
+  manager_sign TEXT DEFAULT '',
+  chief_office_opinion TEXT DEFAULT '',
+  revision_status TEXT DEFAULT '',
+  auditor_left TEXT DEFAULT '',
+  auditor_right TEXT DEFAULT '',
+  approval_draft_checked INTEGER DEFAULT 0,
+  approval_draft TEXT DEFAULT '',
+  state_fund TEXT DEFAULT '',
+  listed_company TEXT DEFAULT '',
+  report_type TEXT DEFAULT '',
+  same_project TEXT DEFAULT '',
+  remark TEXT DEFAULT '',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS scratch_g11 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'review',
+  project_name TEXT DEFAULT '',
+  report_no TEXT DEFAULT '',
+  base_date TEXT DEFAULT '',
+  project_leader TEXT DEFAULT '',
+  signer TEXT DEFAULT '',
+  manager_agree INTEGER DEFAULT 0,
+  manager_disagree INTEGER DEFAULT 0,
+  manager_reasons TEXT DEFAULT '',
+  manager_sign TEXT DEFAULT '',
+  manager_date TEXT DEFAULT '',
+  chief_agree INTEGER DEFAULT 0,
+  chief_disagree INTEGER DEFAULT 0,
+  chief_reasons TEXT DEFAULT '',
+  chief_sign TEXT DEFAULT '',
+  chief_date TEXT DEFAULT '',
+  head_agree INTEGER DEFAULT 0,
+  head_disagree INTEGER DEFAULT 0,
+  head_reasons TEXT DEFAULT '',
+  head_sign TEXT DEFAULT '',
+  head_date TEXT DEFAULT '',
+  issues TEXT DEFAULT '',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS scratch_g12 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'archive',
+  doc_name TEXT DEFAULT '',
+  doc_no TEXT DEFAULT '',
+  items TEXT DEFAULT '[]',
+  receive_unit TEXT DEFAULT '',
+  receive_date TEXT DEFAULT '',
+  deliverer_sign TEXT DEFAULT '',
+  deliver_date TEXT DEFAULT '',
+  updated_at TEXT
+);
 `)
 
 console.log('✅ Seed complete')

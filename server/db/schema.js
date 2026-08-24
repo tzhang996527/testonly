@@ -417,6 +417,77 @@ export const scratchC3 = sqliteTable('scratch_c3', {
   updatedAt:              text('updated_at'),
 })
 
+// G-10 评估报告审核表 (one row per project+stage)
+export const scratchG10 = sqliteTable('scratch_g10', {
+  id:                     text('id').primaryKey(),
+  projectId:              text('project_id').notNull(),
+  stage:                  text('stage').notNull().default('review'),
+  projectName:            text('project_name').default(''),              // 项目名称
+  reportNo:               text('report_no').default(''),                 // 报告文号
+  baseDate:               text('base_date').default(''),                 // 评估基准日
+  projectLeader:          text('project_leader').default(''),            // 项目负责人
+  signer:                 text('signer').default(''),                    // 签字资产评估专业人员
+  signerOpinion:          text('signer_opinion').default(''),            // 签字资产评估专业人员审核意见
+  managerOpinion:         text('manager_opinion').default(''),           // 部门（项目）经理审核意见
+  signerSign:             text('signer_sign').default(''),               // 二名资产评估专业人员签字及日期
+  managerSign:            text('manager_sign').default(''),              // 项目经理签字及日期
+  chiefOfficeOpinion:     text('chief_office_opinion').default(''),      // 总师室审核意见
+  revisionStatus:         text('revision_status').default(''),           // 修改情况
+  auditorLeft:            text('auditor_left').default(''),              // 审核人及审核日期（左）
+  auditorRight:           text('auditor_right').default(''),             // 审核人及审核日期（右）
+  approvalDraftChecked:   integer('approval_draft_checked').default(0),  // □同意先出具一份核准/备案稿
+  approvalDraft:          text('approval_draft').default(''),            // 同意先出具核准/备案稿 审核人
+  stateFund:              text('state_fund').default(''),                // 是否涉及国资项目
+  listedCompany:          text('listed_company').default(''),            // 是否涉及上市公司
+  reportType:             text('report_type').default(''),               // 报告类型
+  sameProject:            text('same_project').default(''),              // 是否以前承接相同项目情况
+  remark:                 text('remark').default(''),                    // 备注
+  updatedAt:              text('updated_at'),
+})
+
+// G-11 评估报告签发表 (one row per project+stage)
+export const scratchG11 = sqliteTable('scratch_g11', {
+  id:                     text('id').primaryKey(),
+  projectId:              text('project_id').notNull(),
+  stage:                  text('stage').notNull().default('review'),
+  projectName:            text('project_name').default(''),              // 项目名称
+  reportNo:               text('report_no').default(''),                 // 报告文号
+  baseDate:               text('base_date').default(''),                 // 评估基准日
+  projectLeader:          text('project_leader').default(''),            // 项目负责人
+  signer:                 text('signer').default(''),                    // 签字资产评估专业人员
+  managerAgree:           integer('manager_agree').default(0),           // 部门经理 同意出具评估报告
+  managerDisagree:        integer('manager_disagree').default(0),        // 部门经理 不同意出具
+  managerReasons:         text('manager_reasons').default(''),           // 部门经理 修改/核实问题
+  managerSign:            text('manager_sign').default(''),              // 项目经理签字
+  managerDate:            text('manager_date').default(''),              // 项目经理日期
+  chiefAgree:             integer('chief_agree').default(0),             // 总师室 同意出具
+  chiefDisagree:          integer('chief_disagree').default(0),          // 总师室 不同意出具
+  chiefReasons:           text('chief_reasons').default(''),             // 总师室 修改/核实问题
+  chiefSign:              text('chief_sign').default(''),                // 总师室 审核人
+  chiefDate:              text('chief_date').default(''),                // 总师室 日期
+  headAgree:              integer('head_agree').default(0),              // 机构负责人 同意出具
+  headDisagree:           integer('head_disagree').default(0),           // 机构负责人 不同意出具
+  headReasons:            text('head_reasons').default(''),              // 机构负责人 修改/核实问题
+  headSign:               text('head_sign').default(''),                 // 机构负责人
+  headDate:               text('head_date').default(''),                 // 机构负责人日期
+  issues:                 text('issues').default(''),                    // 需要说明的问题
+  updatedAt:              text('updated_at'),
+})
+
+export const scratchG12 = sqliteTable('scratch_g12', {
+  id:                     text('id').primaryKey(),
+  projectId:              text('project_id').notNull(),
+  stage:                  text('stage').notNull().default('archive'),
+  docName:                text('doc_name').default(''),                 // 收文名称
+  docNo:                  text('doc_no').default(''),                   // 文号字
+  items:                  text('items').default('[]'),                  // 签收明细 [{no, content, count}]
+  receiveUnit:            text('receive_unit').default(''),             // 收到单位
+  receiveDate:            text('receive_date').default(''),             // 收文日期
+  delivererSign:          text('deliverer_sign').default(''),           // 送达人签字
+  deliverDate:            text('deliver_date').default(''),             // 送达日期
+  updatedAt:              text('updated_at'),
+})
+
 // ── Change audit log ──────────────────────────────────────────────────────────
 export const changeLogs = sqliteTable('change_logs', {
   id:               text('id').primaryKey(),

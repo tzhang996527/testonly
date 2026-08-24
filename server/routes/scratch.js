@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
-import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5, scratchG27, scratchC3 } from '../db/schema.js'
+import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5, scratchG27, scratchC3, scratchG10, scratchG11, scratchG12 } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 
 const router = Router()
@@ -241,6 +241,104 @@ router.put('/c3/:projectId/:stage', async (req, res) => {
   const newId = randomUUID()
   await db.insert(scratchC3).values({ ...fields, id: newId, projectId, stage, updatedAt: now() })
   const [row] = await db.select().from(scratchC3).where(eq(scratchC3.id, newId))
+  res.status(201).json({ data: row })
+})
+
+// ── G-10 评估报告审核表 ───────────────────────────────────────────────────────
+
+// GET /api/scratch/g10/:projectId/:stage
+router.get('/g10/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [row] = await db.select().from(scratchG10)
+    .where(and(eq(scratchG10.projectId, projectId), eq(scratchG10.stage, stage)))
+  res.json({ data: row || null })
+})
+
+// PUT /api/scratch/g10/:projectId/:stage
+router.put('/g10/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [existing] = await db.select().from(scratchG10)
+    .where(and(eq(scratchG10.projectId, projectId), eq(scratchG10.stage, stage)))
+
+  const { id: _id, projectId: _pid, stage: _s, ...fields } = req.body
+  if (existing) {
+    await db.update(scratchG10)
+      .set({ ...fields, updatedAt: now() })
+      .where(eq(scratchG10.id, existing.id))
+    const [row] = await db.select().from(scratchG10).where(eq(scratchG10.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchG10).values({ ...fields, id: newId, projectId, stage, updatedAt: now() })
+  const [row] = await db.select().from(scratchG10).where(eq(scratchG10.id, newId))
+  res.status(201).json({ data: row })
+})
+
+// ── G-11 评估报告签发表 ───────────────────────────────────────────────────────
+
+// GET /api/scratch/g11/:projectId/:stage
+router.get('/g11/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [row] = await db.select().from(scratchG11)
+    .where(and(eq(scratchG11.projectId, projectId), eq(scratchG11.stage, stage)))
+  res.json({ data: row || null })
+})
+
+// PUT /api/scratch/g11/:projectId/:stage
+router.put('/g11/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [existing] = await db.select().from(scratchG11)
+    .where(and(eq(scratchG11.projectId, projectId), eq(scratchG11.stage, stage)))
+
+  const { id: _id, projectId: _pid, stage: _s, ...fields } = req.body
+  if (existing) {
+    await db.update(scratchG11)
+      .set({ ...fields, updatedAt: now() })
+      .where(eq(scratchG11.id, existing.id))
+    const [row] = await db.select().from(scratchG11).where(eq(scratchG11.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchG11).values({ ...fields, id: newId, projectId, stage, updatedAt: now() })
+  const [row] = await db.select().from(scratchG11).where(eq(scratchG11.id, newId))
+  res.status(201).json({ data: row })
+})
+
+// ── G-12 评估报告签收单 ───────────────────────────────────────────────────────
+
+// GET /api/scratch/g12/:projectId/:stage
+router.get('/g12/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [row] = await db.select().from(scratchG12)
+    .where(and(eq(scratchG12.projectId, projectId), eq(scratchG12.stage, stage)))
+  res.json({ data: row || null })
+})
+
+// PUT /api/scratch/g12/:projectId/:stage
+router.put('/g12/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [existing] = await db.select().from(scratchG12)
+    .where(and(eq(scratchG12.projectId, projectId), eq(scratchG12.stage, stage)))
+
+  const body = req.body
+  const fields = {
+    docName:       body.docName       || '',
+    docNo:         body.docNo         || '',
+    items:         JSON.stringify(body.items || []),
+    receiveUnit:   body.receiveUnit   || '',
+    receiveDate:   body.receiveDate   || '',
+    delivererSign: body.delivererSign || '',
+    deliverDate:   body.deliverDate   || '',
+    updatedAt:     now(),
+  }
+  if (existing) {
+    await db.update(scratchG12).set(fields).where(eq(scratchG12.id, existing.id))
+    const [row] = await db.select().from(scratchG12).where(eq(scratchG12.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchG12).values({ ...fields, id: newId, projectId, stage })
+  const [row] = await db.select().from(scratchG12).where(eq(scratchG12.id, newId))
   res.status(201).json({ data: row })
 })
 
