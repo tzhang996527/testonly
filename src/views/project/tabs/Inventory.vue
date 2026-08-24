@@ -2,47 +2,6 @@
   <div class="inventory-tab">
     <el-row :gutter="20">
       <el-col :span="14">
-    <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-weight:600">资产盘点明细</span>
-      <div>
-        <el-tag type="warning" style="margin-right:8px">差异待处理: {{ pendingCount }}</el-tag>
-        <el-button type="primary" size="small" :icon="Plus" :disabled="locked">录入盘点数据</el-button>
-        <el-button type="success" size="small" @click="exportDiff">导出差异表</el-button>
-      </div>
-    </div>
-
-    <el-table :data="items" v-loading="loading" stripe border>
-      <el-table-column :label="t('assets.assetNo')" prop="assetNo" width="140" />
-      <el-table-column :label="t('assets.assetName')" prop="assetName" min-width="130" />
-      <el-table-column label="账面净值" prop="bookValue" width="120">
-        <template #default="{ row }">{{ formatMoney(row.bookValue) }}</template>
-      </el-table-column>
-      <el-table-column label="现场核查值" prop="fieldValue" width="130">
-        <template #default="{ row }">{{ formatMoney(row.fieldValue) }}</template>
-      </el-table-column>
-      <el-table-column label="差异额" prop="diff" width="110">
-        <template #default="{ row }">
-          <span :class="row.diff < 0 ? 'negative' : row.diff > 0 ? 'positive' : ''">
-            {{ row.diff === 0 ? '-' : formatMoney(row.diff) }}
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column label="差异原因" prop="diffReason" min-width="120" />
-      <el-table-column label="处理状态" width="110">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 'handled' ? 'success' : row.status === 'done' ? 'success' : 'warning'" size="small">
-            {{ row.status === 'handled' ? '已处理' : row.status === 'done' ? '无差异' : '待处理' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="120">
-        <template #default="{ row }">
-          <el-button v-if="row.diff !== 0 && row.status !== 'handled'" link type="warning" size="small" :disabled="locked" @click="handleDiff(row)">处理差异</el-button>
-          <el-button link type="primary" size="small" @click="viewDetail(row)">查看</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
     <!-- 底稿表单（G-27 / C3-1-1/2） -->
     <el-card shadow="never" style="margin-top:16px" class="scratch-tabs-card">
       <el-tabs type="border-card" class="scratch-tabs" model-value="g27">
@@ -568,19 +527,15 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Plus, Document, Paperclip, Upload } from '@element-plus/icons-vue'
-import { inventoryApi, scratchApi } from '@/api/index.js'
+import { Document, Paperclip, Upload } from '@element-plus/icons-vue'
+import { scratchApi } from '@/api/index.js'
 import { useProjectStore } from '@/stores/project.js'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 import PermGuard from '@/components/common/PermGuard.vue'
 import { PERM } from '@/constants/permissions.js'
 
-const { t } = useI18n()
 const route = useRoute()
-const items = ref([])
-const loading = ref(false)
 const saving = ref(false)
 const erpStatus = ref([])
 
@@ -591,8 +546,6 @@ async function handleApprove(payload) {
   await projectStore.approveStage(route.params.id, 'inventory', payload)
   ElMessage.success(payload.action === 'approved' ? '已审批通过' : '已驳回')
 }
-
-const pendingCount = computed(() => items.value.filter(i => i.diff !== 0 && i.status !== 'handled').length)
 
 const scratchDocTypes = [
   { key: 'assessDetail', label: '评估明细表' },
@@ -608,23 +561,6 @@ function scratchFiles(key) {
       ? (typeof f.size === 'number' ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : f.size)
       : '',
   }))
-}
-
-function formatMoney(v) {
-  return v ? '¥' + v.toLocaleString() : '-'
-}
-
-function handleDiff(row) {
-  row.status = 'handled'
-  ElMessage.success('差异已标记处理')
-}
-
-function viewDetail(row) {
-  ElMessage.info('查看资产: ' + row.assetName)
-}
-
-function exportDiff() {
-  ElMessage.success('差异表已导出')
 }
 
 // ── G-27 现场勘查记录表 ───────────────────────────────────────────────────────
@@ -809,21 +745,11 @@ async function saveInventory() {
 }
 
 onMounted(async () => {
-  loading.value = true
-  try {
-    const res = await inventoryApi.list(route.params.id)
-    items.value = res.data
-  } finally {
-    loading.value = false
-  }
   await Promise.all([loadG27(), loadC3()])
 })
 </script>
 
 <style scoped>
-.negative { color: #ff4d4f; }
-.positive { color: #52c41a; }
-
 .scratch-docs { display: flex; flex-direction: column; gap: 0; }
 
 .scratch-doc-item {

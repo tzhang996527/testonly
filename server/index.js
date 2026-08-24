@@ -4,7 +4,6 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import projectsRouter    from './routes/projects.js'
 import assetsRouter      from './routes/assets.js'
-import inventoryRouter   from './routes/inventory.js'
 import documentsRouter   from './routes/documents.js'
 import usersRouter       from './routes/users.js'
 import dashboardRouter   from './routes/dashboard.js'
@@ -38,7 +37,6 @@ app.use('/api/users', usersRouter)
 app.use(authMiddleware)
 app.use('/api/projects',     projectsRouter)
 app.use('/api/assets',       assetsRouter)
-app.use('/api/inventory',    inventoryRouter)
 app.use('/api/documents',    documentsRouter)
 app.use('/api/dashboard',    dashboardRouter)
 app.use('/api/approvals',    approvalsRouter)

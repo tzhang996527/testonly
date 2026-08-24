@@ -26,15 +26,6 @@ export const FIELD_LABELS = {
     assessor:      '评估师',
     reportNo:      '报告编号',
   },
-  inventory_item: {
-    bookValue:  '账面值',
-    fieldValue: '现场值',
-    diff:       '差异',
-    diffReason: '差异原因',
-    status:     '状态',
-    handler:    '处理人',
-    handleTime: '处理时间',
-  },
   stage_pre_work: {
     contractNo: '合同编号',
     clientName: '委托方名称',

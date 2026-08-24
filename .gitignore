@@ -39,3 +39,5 @@ uploads/
 erp.db
 erp.db-shm
 erp.db-wal
+
+template/

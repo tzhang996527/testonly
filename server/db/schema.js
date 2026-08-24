@@ -44,20 +44,6 @@ export const assets = sqliteTable('assets', {
   reportNo:      text('report_no'),
 })
 
-export const inventoryItems = sqliteTable('inventory_items', {
-  id:          text('id').primaryKey(),
-  projectId:   text('project_id').notNull(),
-  assetNo:     text('asset_no'),
-  assetName:   text('asset_name'),
-  bookValue:   real('book_value').default(0),
-  fieldValue:  real('field_value').default(0),
-  diff:        real('diff').default(0),
-  diffReason:  text('diff_reason'),
-  status:      text('status').default('pending'),
-  handler:     text('handler'),
-  handleTime:  text('handle_time'),
-})
-
 export const documents = sqliteTable('documents', {
   id:          text('id').primaryKey(),
   projectId:   text('project_id').notNull(),
@@ -434,7 +420,7 @@ export const scratchC3 = sqliteTable('scratch_c3', {
 // ── Change audit log ──────────────────────────────────────────────────────────
 export const changeLogs = sqliteTable('change_logs', {
   id:               text('id').primaryKey(),
-  entityType:       text('entity_type').notNull(),   // 'project' | 'asset' | 'inventory_item' | stage keys
+  entityType:       text('entity_type').notNull(),   // 'project' | 'asset' | stage keys
   entityId:         text('entity_id').notNull(),
   projectId:        text('project_id'),              // denormalized for fast per-project queries
   action:           text('action').notNull(),         // 'create' | 'update' | 'delete'

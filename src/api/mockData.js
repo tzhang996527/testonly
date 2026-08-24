@@ -230,12 +230,6 @@ export const mockRoles = [
   { key: 'riskControl', label: '风控', tagType: '' },
 ]
 
-export const mockInventoryItems = [
-  { id: '1', projectId: '1', assetNo: 'FA-2024-001', assetName: '数控机床', bookValue: 612000, fieldValue: 608000, diff: -4000, diffReason: '磨损略大', status: 'handled', handler: '张伟', handleTime: '2024-02-20' },
-  { id: '2', projectId: '1', assetNo: 'FA-2024-002', assetName: '工业机器人', bookValue: 900000, fieldValue: 900000, diff: 0, diffReason: '', status: 'done', handler: '', handleTime: '' },
-  { id: '3', projectId: '1', assetNo: 'FA-2024-003', assetName: '办公楼', bookValue: 4200000, fieldValue: 4200000, diff: 0, diffReason: '', status: 'done', handler: '', handleTime: '' },
-]
-
 export const mockDocuments = [
   { id: '1', projectId: '1', category: 'ownership', name: '房产证-A101.pdf', size: '2.1MB', uploadedBy: '张伟', uploadedAt: '2024-02-15 10:00:00', status: 'verified' },
   { id: '2', projectId: '1', category: 'financial', name: '近三年审计报告.pdf', size: '5.3MB', uploadedBy: '张伟', uploadedAt: '2024-02-15 10:30:00', status: 'verified' },

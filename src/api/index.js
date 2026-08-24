@@ -49,12 +49,6 @@ export const assetApi = {
   update: (id, payload) => http.patch(`/assets/${id}`, payload).then(r => r.data),
 }
 
-// ── Inventory ──────────────────────────────────────────────
-export const inventoryApi = {
-  list:   (projectId)   => http.get(`/inventory/${projectId}`).then(r => r.data),
-  update: (id, payload) => http.patch(`/inventory/${id}`, payload).then(r => r.data),
-}
-
 // ── Stages ─────────────────────────────────────────────────
 export const stagesApi = {
   get:    (projectId, stage)         => http.get(`/stages/${projectId}/${stage}`).then(r => r.data),

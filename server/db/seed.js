@@ -46,20 +46,6 @@ CREATE TABLE IF NOT EXISTS assets (
   report_no TEXT
 );
 
-CREATE TABLE IF NOT EXISTS inventory_items (
-  id TEXT PRIMARY KEY,
-  project_id TEXT NOT NULL,
-  asset_no TEXT,
-  asset_name TEXT,
-  book_value REAL DEFAULT 0,
-  field_value REAL DEFAULT 0,
-  diff REAL DEFAULT 0,
-  diff_reason TEXT,
-  status TEXT DEFAULT 'pending',
-  handler TEXT,
-  handle_time TEXT
-);
-
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
@@ -355,12 +341,6 @@ const mockAssets = [
   { id: '6', projectId: '4', assetNo: 'IV-2024-001', assetName: '原材料库存', spec: '铝合金原材料', location: '仓库A', ownershipNo: '存货-001', originalValue: 450000, netValue: 450000, assessedValue: 432000, method: 'market', assessor: '孙评估师', reportNo: 'RPT-2024-004' },
 ]
 
-const mockInventoryItems = [
-  { id: '1', projectId: '1', assetNo: 'FA-2024-001', assetName: '数控机床', bookValue: 612000, fieldValue: 608000, diff: -4000, diffReason: '磨损略大', status: 'handled', handler: '张伟', handleTime: '2024-02-20' },
-  { id: '2', projectId: '1', assetNo: 'FA-2024-002', assetName: '工业机器人', bookValue: 900000, fieldValue: 900000, diff: 0, diffReason: '', status: 'done', handler: '', handleTime: '' },
-  { id: '3', projectId: '1', assetNo: 'FA-2024-003', assetName: '办公楼', bookValue: 4200000, fieldValue: 4200000, diff: 0, diffReason: '', status: 'done', handler: '', handleTime: '' },
-]
-
 const mockDocuments = [
   { id: '1', projectId: '1', stage: 'collection', category: 'ownership',  name: '房产证-A101.pdf',   size: '2.1MB', uploadedBy: '张伟', uploadedAt: '2024-02-15 10:00:00', status: 'verified' },
   { id: '2', projectId: '1', stage: 'collection', category: 'financial',  name: '近三年审计报告.pdf', size: '5.3MB', uploadedBy: '张伟', uploadedAt: '2024-02-15 10:30:00', status: 'verified' },
@@ -414,16 +394,6 @@ const insertAsset = sqlite.prepare(`
 for (const a of mockAssets) {
   insertAsset.run(a.id, a.projectId, a.assetNo, a.assetName, a.spec, a.location,
     a.ownershipNo, a.originalValue, a.netValue, a.assessedValue, a.method, a.assessor, a.reportNo)
-}
-
-const insertInv = sqlite.prepare(`
-  INSERT OR IGNORE INTO inventory_items
-    (id, project_id, asset_no, asset_name, book_value, field_value, diff, diff_reason, status, handler, handle_time)
-  VALUES (?,?,?,?,?,?,?,?,?,?,?)
-`)
-for (const i of mockInventoryItems) {
-  insertInv.run(i.id, i.projectId, i.assetNo, i.assetName, i.bookValue, i.fieldValue,
-    i.diff, i.diffReason, i.status, i.handler, i.handleTime)
 }
 
 const insertDoc = sqlite.prepare(`
