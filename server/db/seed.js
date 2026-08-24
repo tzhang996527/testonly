@@ -109,9 +109,6 @@ CREATE TABLE IF NOT EXISTS stage_pre_work (
 
 CREATE TABLE IF NOT EXISTS stage_inventory (
   project_id TEXT PRIMARY KEY,
-  survey_date TEXT,
-  survey_personnel TEXT,
-  survey_desc TEXT,
   erp_status TEXT DEFAULT '[]',
   updated_at TEXT
 );
@@ -666,6 +663,64 @@ CREATE TABLE IF NOT EXISTS scratch_g5 (
   project_id TEXT NOT NULL,
   stage TEXT NOT NULL DEFAULT 'pre-work',
   items TEXT DEFAULT '[]',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS scratch_g27 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'inventory',
+  object_name TEXT DEFAULT '',
+  survey_date TEXT DEFAULT '',
+  surveyor TEXT DEFAULT '',
+  contact_person TEXT DEFAULT '',
+  location TEXT DEFAULT '',
+  environment TEXT DEFAULT '',
+  conclusion TEXT DEFAULT '',
+  first_signature TEXT DEFAULT '',
+  second_time TEXT DEFAULT '',
+  second_surveyor TEXT DEFAULT '',
+  second_contact TEXT DEFAULT '',
+  second_conclusion TEXT DEFAULT '',
+  second_signature TEXT DEFAULT '',
+  third_time TEXT DEFAULT '',
+  third_surveyor TEXT DEFAULT '',
+  third_contact TEXT DEFAULT '',
+  third_conclusion TEXT DEFAULT '',
+  third_signature TEXT DEFAULT '',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS scratch_c3 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'inventory',
+  unit_name TEXT DEFAULT '',
+  base_date TEXT DEFAULT '',
+  page_total TEXT DEFAULT '',
+  page_no TEXT DEFAULT '',
+  denominations TEXT DEFAULT '[]',
+  total TEXT DEFAULT '{}',
+  exchange_rate TEXT DEFAULT '',
+  rmb_note TEXT DEFAULT '',
+  check_date TEXT DEFAULT '',
+  inventory_balance TEXT DEFAULT '',
+  add_unrecorded_expense TEXT DEFAULT '',
+  minus_unrecorded_income TEXT DEFAULT '',
+  add_recorded_expense TEXT DEFAULT '',
+  minus_recorded_income TEXT DEFAULT '',
+  adjusted_book_value TEXT DEFAULT '',
+  base_book_value TEXT DEFAULT '',
+  long_amount TEXT DEFAULT '',
+  short_amount TEXT DEFAULT '',
+  appraised_value TEXT DEFAULT '',
+  reason_analysis TEXT DEFAULT '',
+  storage_location TEXT DEFAULT '',
+  cashier_sign TEXT DEFAULT '',
+  accounting_supervisor TEXT DEFAULT '',
+  monitor_person TEXT DEFAULT '',
+  filler TEXT DEFAULT '',
+  reviewer TEXT DEFAULT '',
   updated_at TEXT
 );
 `)

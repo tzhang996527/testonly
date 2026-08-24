@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
-import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5 } from '../db/schema.js'
+import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5, scratchG27, scratchC3 } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 
 const router = Router()
@@ -181,6 +181,66 @@ router.put('/g5/:projectId/:stage', async (req, res) => {
   const newId = randomUUID()
   await db.insert(scratchG5).values({ ...fields, id: newId, projectId, stage })
   const [row] = await db.select().from(scratchG5).where(eq(scratchG5.id, newId))
+  res.status(201).json({ data: row })
+})
+
+// ── G-27 现场勘查记录表 ───────────────────────────────────────────────────────
+
+// GET /api/scratch/g27/:projectId/:stage
+router.get('/g27/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [row] = await db.select().from(scratchG27)
+    .where(and(eq(scratchG27.projectId, projectId), eq(scratchG27.stage, stage)))
+  res.json({ data: row || null })
+})
+
+// PUT /api/scratch/g27/:projectId/:stage
+router.put('/g27/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [existing] = await db.select().from(scratchG27)
+    .where(and(eq(scratchG27.projectId, projectId), eq(scratchG27.stage, stage)))
+
+  const { id: _id, projectId: _pid, stage: _s, ...fields } = req.body
+  if (existing) {
+    await db.update(scratchG27)
+      .set({ ...fields, updatedAt: now() })
+      .where(eq(scratchG27.id, existing.id))
+    const [row] = await db.select().from(scratchG27).where(eq(scratchG27.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchG27).values({ ...fields, id: newId, projectId, stage, updatedAt: now() })
+  const [row] = await db.select().from(scratchG27).where(eq(scratchG27.id, newId))
+  res.status(201).json({ data: row })
+})
+
+// ── C3-1-1/2 库存现金作业分析表 ───────────────────────────────────────────────
+
+// GET /api/scratch/c3/:projectId/:stage
+router.get('/c3/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [row] = await db.select().from(scratchC3)
+    .where(and(eq(scratchC3.projectId, projectId), eq(scratchC3.stage, stage)))
+  res.json({ data: row || null })
+})
+
+// PUT /api/scratch/c3/:projectId/:stage
+router.put('/c3/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [existing] = await db.select().from(scratchC3)
+    .where(and(eq(scratchC3.projectId, projectId), eq(scratchC3.stage, stage)))
+
+  const { id: _id, projectId: _pid, stage: _s, ...fields } = req.body
+  if (existing) {
+    await db.update(scratchC3)
+      .set({ ...fields, updatedAt: now() })
+      .where(eq(scratchC3.id, existing.id))
+    const [row] = await db.select().from(scratchC3).where(eq(scratchC3.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchC3).values({ ...fields, id: newId, projectId, stage, updatedAt: now() })
+  const [row] = await db.select().from(scratchC3).where(eq(scratchC3.id, newId))
   res.status(201).json({ data: row })
 })
 

@@ -165,6 +165,10 @@ export const scratchApi = {
   saveG4:   (projectId, stage, data) => http.put(`/scratch/g4/${projectId}/${stage}`, data).then(r => r.data),
   getG5:    (projectId, stage) => http.get(`/scratch/g5/${projectId}/${stage}`).then(r => r.data),
   saveG5:   (projectId, stage, data) => http.put(`/scratch/g5/${projectId}/${stage}`, data).then(r => r.data),
+  getG27:   (projectId, stage) => http.get(`/scratch/g27/${projectId}/${stage}`).then(r => r.data),
+  saveG27:  (projectId, stage, data) => http.put(`/scratch/g27/${projectId}/${stage}`, data).then(r => r.data),
+  getC3:    (projectId, stage) => http.get(`/scratch/c3/${projectId}/${stage}`).then(r => r.data),
+  saveC3:   (projectId, stage, data) => http.put(`/scratch/c3/${projectId}/${stage}`, data).then(r => r.data),
 }
 
 // ── Work Log ──────────────────────────────────────────────────

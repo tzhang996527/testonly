@@ -109,12 +109,9 @@ export const stagePreWork = sqliteTable('stage_pre_work', {
 
 // stage: inventory
 export const stageInventory = sqliteTable('stage_inventory', {
-  projectId:       text('project_id').primaryKey(),
-  surveyDate:      text('survey_date'),
-  surveyPersonnel: text('survey_personnel'),
-  surveyDesc:      text('survey_desc'),
-  erpStatus:       text('erp_status').default('[]'),
-  updatedAt:       text('updated_at'),
+  projectId: text('project_id').primaryKey(),
+  erpStatus: text('erp_status').default('[]'),
+  updatedAt: text('updated_at'),
 })
 
 // stage: collection
@@ -372,6 +369,66 @@ export const scratchG5 = sqliteTable('scratch_g5', {
   stage:     text('stage').notNull().default('pre-work'),
   items:     text('items').default('[]'),   // JSON array [{needDate, providedDate, signer, remark}]
   updatedAt: text('updated_at'),
+})
+
+// G-27 现场勘查记录表 (one row per project+stage)
+export const scratchG27 = sqliteTable('scratch_g27', {
+  id:               text('id').primaryKey(),
+  projectId:        text('project_id').notNull(),
+  stage:            text('stage').notNull().default('inventory'),
+  objectName:       text('object_name').default(''),        // 勘查对象名称
+  surveyDate:       text('survey_date').default(''),        // 勘察日期
+  surveyor:         text('surveyor').default(''),           // 勘查人员
+  contactPerson:    text('contact_person').default(''),     // 接洽人员
+  location:         text('location').default(''),           // 勘查对象所处位置
+  environment:      text('environment').default(''),        // 勘查对象周围环境
+  conclusion:       text('conclusion').default(''),         // 勘查结论
+  firstSignature:   text('first_signature').default(''),    // 接待方签字（盖章）
+  secondTime:       text('second_time').default(''),        // 第二次勘查时间
+  secondSurveyor:   text('second_surveyor').default(''),    // 勘查人员
+  secondContact:    text('second_contact').default(''),     // 接洽人员
+  secondConclusion: text('second_conclusion').default(''),  // 勘查结论
+  secondSignature:  text('second_signature').default(''),   // 接待方签字（盖章）
+  thirdTime:        text('third_time').default(''),         // 第三次勘查时间
+  thirdSurveyor:    text('third_surveyor').default(''),     // 勘查人员
+  thirdContact:     text('third_contact').default(''),      // 接洽人员
+  thirdConclusion:  text('third_conclusion').default(''),   // 勘查结论
+  thirdSignature:   text('third_signature').default(''),    // 接待方签字（盖章）
+  updatedAt:        text('updated_at'),
+})
+
+// C3-1-1/2 库存现金作业分析表 (one row per project+stage)
+export const scratchC3 = sqliteTable('scratch_c3', {
+  id:                     text('id').primaryKey(),
+  projectId:              text('project_id').notNull(),
+  stage:                  text('stage').notNull().default('inventory'),
+  unitName:               text('unit_name').default(''),              // 被评估单位
+  baseDate:               text('base_date').default(''),              // 评估基准日
+  pageTotal:              text('page_total').default(''),             // 页次 共
+  pageNo:                 text('page_no').default(''),                // 页次 第
+  denominations:          text('denominations').default('[]'),        // JSON [{denom,fcCount,fcAmount,rmbCount,rmbAmount}]
+  total:                  text('total').default('{}'),                // JSON {fcCount,fcAmount,rmbCount,rmbAmount}
+  exchangeRate:           text('exchange_rate').default(''),          // 即期汇率
+  rmbNote:                text('rmb_note').default(''),               // 人民币
+  checkDate:              text('check_date').default(''),             // 清查日期
+  inventoryBalance:       text('inventory_balance').default(''),      // 清查日盘点库存现金余额
+  addUnrecordedExpense:   text('add_unrecorded_expense').default(''),  // 加:基准日至清查日支出未记账
+  minusUnrecordedIncome:  text('minus_unrecorded_income').default(''), // 减:基准日至清查日收入未记账
+  addRecordedExpense:     text('add_recorded_expense').default(''),    // 加:基准日至清查日支出已记账
+  minusRecordedIncome:    text('minus_recorded_income').default(''),   // 减:基准日至清查日收入已记账
+  adjustedBookValue:      text('adjusted_book_value').default(''),     // 平衡法调整后账面值
+  baseBookValue:          text('base_book_value').default(''),         // 评估基准日账面值
+  longAmount:             text('long_amount').default(''),             // 长款金额
+  shortAmount:            text('short_amount').default(''),            // 短款金额
+  appraisedValue:         text('appraised_value').default(''),         // 评估价值
+  reasonAnalysis:         text('reason_analysis').default(''),         // 原因分析
+  storageLocation:        text('storage_location').default(''),        // 库存现金保管地点
+  cashierSign:            text('cashier_sign').default(''),            // 出纳签字
+  accountingSupervisor:   text('accounting_supervisor').default(''),   // 会计主管
+  monitorPerson:          text('monitor_person').default(''),          // 评估监盘人员
+  filler:                 text('filler').default(''),                  // 填表人
+  reviewer:               text('reviewer').default(''),                // 复核人
+  updatedAt:              text('updated_at'),
 })
 
 // ── Change audit log ──────────────────────────────────────────────────────────

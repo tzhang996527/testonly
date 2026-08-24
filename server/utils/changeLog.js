@@ -46,10 +46,7 @@ export const FIELD_LABELS = {
     erpStatus:  '工作进度状态',
   },
   stage_inventory: {
-    surveyDate:      '现场勘查日期',
-    surveyPersonnel: '勘查人员',
-    surveyDesc:      '勘查描述',
-    erpStatus:       '工作进度状态',
+    erpStatus: '工作进度状态',
   },
   stage_collection:  { erpStatus: '工作进度状态' },
   stage_estimation:  { erpStatus: '工作进度状态' },
