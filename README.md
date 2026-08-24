@@ -1,18 +1,18 @@
-# 资产评估管理系统
+# TestOnly
 
 基于 Vue 3 + Vite + Element Plus 的资产评估全流程 ERP Web 应用，支持中英文 i18n，数据采用 Mock API。
 
 ## 技术栈
 
-| 技术 | 说明 |
-|------|------|
-| Vue 3 | 前端框架（Composition API） |
-| Vite 5 | 构建工具 |
-| Element Plus | UI 组件库 |
-| Pinia | 状态管理 |
-| Vue Router 4 | 路由 |
-| Vue I18n 9 | 国际化（默认中文） |
-| Day.js | 日期处理 |
+| 技术         | 说明                        |
+| ------------ | --------------------------- |
+| Vue 3        | 前端框架（Composition API） |
+| Vite 5       | 构建工具                    |
+| Element Plus | UI 组件库                   |
+| Pinia        | 状态管理                    |
+| Vue Router 4 | 路由                        |
+| Vue I18n 9   | 国际化（默认中文）          |
+| Day.js       | 日期处理                    |
 
 ## 快速开始
 
@@ -25,13 +25,13 @@ npm run preview  # 预览构建产物
 
 ### 演示账号
 
-| 用户名 | 密码 | 角色 |
-|--------|------|------|
-| admin | 123456 | 系统管理员 |
-| zhang.wei | 123456 | 评估专业人员 |
-| chen.ceo | 123456 | 总经理（可审批） |
-| li.manager | 123456 | 部门负责人 |
-| wang.riskctrl | 123456 | 风控 |
+| 用户名        | 密码   | 角色             |
+| ------------- | ------ | ---------------- |
+| admin         | 123456 | 系统管理员       |
+| zhang.wei     | 123456 | 评估专业人员     |
+| chen.ceo      | 123456 | 总经理（可审批） |
+| li.manager    | 123456 | 部门负责人       |
+| wang.riskctrl | 123456 | 风控             |
 
 ## 评估流程
 
@@ -119,21 +119,21 @@ erp2/
 // 示例：将 projectApi.list 替换为真实请求
 export const projectApi = {
   async list(params) {
-    const res = await axios.get('/api/projects', { params })
-    return res.data
+    const res = await axios.get("/api/projects", { params });
+    return res.data;
   },
   // ...
-}
+};
 ```
 
 ## 权限角色
 
-| 角色 | 说明 |
-|------|------|
-| `admin` | 系统管理员，全部权限 |
-| `assessor` | 评估专业人员，负责流程操作 |
-| `deptManager` | 部门负责人，一级审批 |
-| `riskControl` | 风控，立项审批节点 |
-| `office` | 办公室，立项/前期工作审批节点 |
-| `ceo` | 总经理，最终审批 |
-| `chiefEngineer` | 总师室，评估报告二级审核 |
+| 角色            | 说明                          |
+| --------------- | ----------------------------- |
+| `admin`         | 系统管理员，全部权限          |
+| `assessor`      | 评估专业人员，负责流程操作    |
+| `deptManager`   | 部门负责人，一级审批          |
+| `riskControl`   | 风控，立项审批节点            |
+| `office`        | 办公室，立项/前期工作审批节点 |
+| `ceo`           | 总经理，最终审批              |
+| `chiefEngineer` | 总师室，评估报告二级审核      |

@@ -341,6 +341,39 @@ export const scratchG28 = sqliteTable('scratch_g28', {
   updatedAt:   text('updated_at'),
 })
 
+// G-4 评估项目工作计划表 (one row per project+stage)
+export const scratchG4 = sqliteTable('scratch_g4', {
+  id:             text('id').primaryKey(),
+  projectId:      text('project_id').notNull(),
+  stage:          text('stage').notNull().default('pre-work'),
+  projectName:    text('project_name').default(''),
+  purpose:        text('purpose').default(''),
+  baseDate:       text('base_date').default(''),
+  valueType:      text('value_type').default(''),
+  scope:          text('scope').default(''),
+  schedule:       text('schedule').default('[]'),   // JSON array [{responsible, startDate, endDate}]
+  staff:          text('staff').default('[]'),       // JSON array [{person}]
+  budget:         text('budget').default('{}'),      // JSON {labor, travel, field, overtime, other}
+  approver:       text('approver').default(''),
+  approveDate:    text('approve_date').default(''),
+  adjustment:     text('adjustment').default(''),
+  adjustApprover: text('adjust_approver').default(''),
+  adjustDate:     text('adjust_date').default(''),
+  remark:         text('remark').default(''),
+  preparer:       text('preparer').default(''),
+  reviewer:       text('reviewer').default(''),
+  updatedAt:      text('updated_at'),
+})
+
+// G-5 资料清单 (one row per project+stage)
+export const scratchG5 = sqliteTable('scratch_g5', {
+  id:        text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  stage:     text('stage').notNull().default('pre-work'),
+  items:     text('items').default('[]'),   // JSON array [{needDate, providedDate, signer, remark}]
+  updatedAt: text('updated_at'),
+})
+
 // ── Change audit log ──────────────────────────────────────────────────────────
 export const changeLogs = sqliteTable('change_logs', {
   id:               text('id').primaryKey(),

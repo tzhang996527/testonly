@@ -637,6 +637,37 @@ CREATE TABLE IF NOT EXISTS scratch_g28 (
   created_at TEXT,
   updated_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS scratch_g4 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'pre-work',
+  project_name TEXT DEFAULT '',
+  purpose TEXT DEFAULT '',
+  base_date TEXT DEFAULT '',
+  value_type TEXT DEFAULT '',
+  scope TEXT DEFAULT '',
+  schedule TEXT DEFAULT '[]',
+  staff TEXT DEFAULT '[]',
+  budget TEXT DEFAULT '{}',
+  approver TEXT DEFAULT '',
+  approve_date TEXT DEFAULT '',
+  adjustment TEXT DEFAULT '',
+  adjust_approver TEXT DEFAULT '',
+  adjust_date TEXT DEFAULT '',
+  remark TEXT DEFAULT '',
+  preparer TEXT DEFAULT '',
+  reviewer TEXT DEFAULT '',
+  updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS scratch_g5 (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'pre-work',
+  items TEXT DEFAULT '[]',
+  updated_at TEXT
+);
 `)
 
 console.log('✅ Seed complete')

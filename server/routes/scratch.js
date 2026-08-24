@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
-import { scratchG1, scratchG2, scratchG28 } from '../db/schema.js'
+import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5 } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 
 const router = Router()
@@ -111,6 +111,77 @@ router.delete('/g28/:id', async (req, res) => {
   if (!existing) return res.status(404).json({ message: '未找到记录' })
   await db.delete(scratchG28).where(eq(scratchG28.id, req.params.id))
   res.json({ message: '已删除' })
+})
+
+// ── G-4 ──────────────────────────────────────────────────────────────────────
+
+router.get('/g4/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [row] = await db.select().from(scratchG4)
+    .where(and(eq(scratchG4.projectId, projectId), eq(scratchG4.stage, stage)))
+  res.json({ data: row || null })
+})
+
+router.put('/g4/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [existing] = await db.select().from(scratchG4)
+    .where(and(eq(scratchG4.projectId, projectId), eq(scratchG4.stage, stage)))
+
+  const body = req.body
+  const fields = {
+    projectName:    body.projectName    || '',
+    purpose:        body.purpose        || '',
+    baseDate:       body.baseDate       || '',
+    valueType:      body.valueType      || '',
+    scope:          body.scope          || '',
+    schedule:       JSON.stringify(body.schedule  || []),
+    staff:          JSON.stringify(body.staff     || []),
+    budget:         JSON.stringify(body.budget    || {}),
+    approver:       body.approver       || '',
+    approveDate:    body.approveDate    || '',
+    adjustment:     body.adjustment     || '',
+    adjustApprover: body.adjustApprover || '',
+    adjustDate:     body.adjustDate     || '',
+    remark:         body.remark         || '',
+    preparer:       body.preparer       || '',
+    reviewer:       body.reviewer       || '',
+    updatedAt:      now(),
+  }
+  if (existing) {
+    await db.update(scratchG4).set(fields).where(eq(scratchG4.id, existing.id))
+    const [row] = await db.select().from(scratchG4).where(eq(scratchG4.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchG4).values({ ...fields, id: newId, projectId, stage })
+  const [row] = await db.select().from(scratchG4).where(eq(scratchG4.id, newId))
+  res.status(201).json({ data: row })
+})
+
+// ── G-5 ──────────────────────────────────────────────────────────────────────
+
+router.get('/g5/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [row] = await db.select().from(scratchG5)
+    .where(and(eq(scratchG5.projectId, projectId), eq(scratchG5.stage, stage)))
+  res.json({ data: row || null })
+})
+
+router.put('/g5/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [existing] = await db.select().from(scratchG5)
+    .where(and(eq(scratchG5.projectId, projectId), eq(scratchG5.stage, stage)))
+
+  const fields = { items: req.body.items || '[]', updatedAt: now() }
+  if (existing) {
+    await db.update(scratchG5).set(fields).where(eq(scratchG5.id, existing.id))
+    const [row] = await db.select().from(scratchG5).where(eq(scratchG5.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchG5).values({ ...fields, id: newId, projectId, stage })
+  const [row] = await db.select().from(scratchG5).where(eq(scratchG5.id, newId))
+  res.status(201).json({ data: row })
 })
 
 export default router

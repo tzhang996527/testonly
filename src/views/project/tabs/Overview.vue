@@ -2,7 +2,7 @@
   <div class="overview-tab">
     <el-row :gutter="20">
       <el-col :span="14">
-        <el-card shadow="never">
+        <el-card shadow="never" class="scratch-tabs-card">
           <template #header>
             <div
               style="
@@ -53,127 +53,6 @@
               </div>
             </div>
           </template>
-
-          <!-- view mode -->
-          <el-descriptions v-if="!editing" :column="2" border>
-            <el-descriptions-item :label="t('project.projectNo')">{{
-              project?.projectNo
-            }}</el-descriptions-item>
-            <el-descriptions-item :label="t('project.purpose')">{{
-              project?.purpose
-            }}</el-descriptions-item>
-            <el-descriptions-item :label="t('project.baseDate')">{{
-              project?.baseDate
-            }}</el-descriptions-item>
-            <el-descriptions-item :label="t('project.assetCategory')">
-              {{
-                project
-                  ? t(`project.assetCategories.${project.assetCategory}`)
-                  : ""
-              }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="t('project.responsible')">{{
-              project?.responsible
-            }}</el-descriptions-item>
-            <el-descriptions-item :label="t('project.department')">{{
-              project?.department
-            }}</el-descriptions-item>
-            <el-descriptions-item :label="t('common.status')">
-              <StatusTag :status="project?.status" />
-            </el-descriptions-item>
-            <el-descriptions-item :label="t('common.createdAt')">{{
-              project?.createdAt
-            }}</el-descriptions-item>
-            <el-descriptions-item :label="t('common.remark')" :span="2">{{
-              project?.remark
-            }}</el-descriptions-item>
-            <el-descriptions-item label="预算工时">
-              {{
-                project?.budgetHours ? project.budgetHours + " 小时" : "未设置"
-              }}
-            </el-descriptions-item>
-            <el-descriptions-item label="实际用时">
-              {{ project?.actualHours ? project.actualHours + " 小时" : "—" }}
-            </el-descriptions-item>
-          </el-descriptions>
-
-          <!-- edit mode -->
-          <el-form v-else :model="editForm" label-width="110px">
-            <el-form-item :label="t('project.purpose')">
-              <el-select
-                v-model="editForm.purpose"
-                filterable
-                allow-create
-                placeholder="请选择或输入评估目的"
-              >
-                <el-option
-                  v-for="opt in purposeOptions"
-                  :key="opt.id"
-                  :label="opt.name"
-                  :value="opt.name"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item :label="t('project.baseDate')">
-              <el-date-picker
-                v-model="editForm.baseDate"
-                type="date"
-                value-format="YYYY-MM-DD"
-              />
-            </el-form-item>
-            <el-form-item :label="t('project.assetCategory')">
-              <el-select v-model="editForm.assetCategory">
-                <el-option
-                  :label="t('project.assetCategories.fixed')"
-                  value="fixed"
-                />
-                <el-option
-                  :label="t('project.assetCategories.intangible')"
-                  value="intangible"
-                />
-                <el-option
-                  :label="t('project.assetCategories.inventory')"
-                  value="inventory"
-                />
-                <el-option
-                  :label="t('project.assetCategories.whole')"
-                  value="whole"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item :label="t('project.responsible')">
-              <el-select v-model="editForm.responsible">
-                <el-option label="张伟" value="张伟" />
-                <el-option label="李娜" value="李娜" />
-                <el-option label="王磊" value="王磊" />
-                <el-option label="赵敏" value="赵敏" />
-              </el-select>
-            </el-form-item>
-            <el-form-item :label="t('project.department')">
-              <el-input v-model="editForm.department" />
-            </el-form-item>
-            <el-form-item :label="t('common.remark')">
-              <el-input v-model="editForm.remark" type="textarea" :rows="3" />
-            </el-form-item>
-            <el-form-item label="预算工时">
-              <el-input-number
-                v-model="editForm.budgetHours"
-                :min="0"
-                :step="4"
-                style="width: 160px"
-              />
-              <span style="margin-left: 8px; color: #9ca3af; font-size: 13px"
-                >小时</span
-              >
-            </el-form-item>
-          </el-form>
-        </el-card>
-
-        <el-card
-          shadow="never"
-          class="scratch-tabs-card"
-          style="margin-top: 16px"
-        >
           <el-tabs type="border-card" class="scratch-tabs" model-value="g1">
             <!-- G-1 评估业务基本事项调查表 -->
             <el-tab-pane label="G-1 基本事项调查表" name="g1">
@@ -229,7 +108,9 @@
                     </tr>
                     <!-- 被评估单位：名称 + 地址 -->
                     <tr>
-                      <td class="label-cell" rowspan="4">被评估单位</td>
+                      <td class="label-cell" rowspan="4" colspan="1">
+                        被评估单位
+                      </td>
                       <td class="label-cell">名称</td>
                       <td>
                         <input
