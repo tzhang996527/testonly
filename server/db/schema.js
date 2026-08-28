@@ -488,6 +488,18 @@ export const scratchG12 = sqliteTable('scratch_g12', {
   updatedAt:              text('updated_at'),
 })
 
+// 评估方法底稿文件确认 (one row per project+stage)
+export const scratchEstimationMethods = sqliteTable('scratch_estimation_methods', {
+  id:              text('id').primaryKey(),
+  projectId:       text('project_id').notNull(),
+  stage:           text('stage').notNull().default('estimation'),
+  selectedMethods: text('selected_methods').default('[]'), // JSON string[] e.g. ["assetBase","income"]
+  checksAssetBase: text('checks_asset_base').default('[]'), // JSON boolean[] 61 items
+  checksIncome:    text('checks_income').default('[]'),     // JSON boolean[] 55 items
+  checksMarket:    text('checks_market').default('[]'),     // JSON boolean[] 12 items
+  updatedAt:       text('updated_at'),
+})
+
 // ── Change audit log ──────────────────────────────────────────────────────────
 export const changeLogs = sqliteTable('change_logs', {
   id:               text('id').primaryKey(),

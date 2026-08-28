@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
-import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5, scratchG27, scratchC3, scratchG10, scratchG11, scratchG12 } from '../db/schema.js'
+import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5, scratchG27, scratchC3, scratchG10, scratchG11, scratchG12, scratchEstimationMethods } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 
 const router = Router()
@@ -339,6 +339,41 @@ router.put('/g12/:projectId/:stage', async (req, res) => {
   const newId = randomUUID()
   await db.insert(scratchG12).values({ ...fields, id: newId, projectId, stage })
   const [row] = await db.select().from(scratchG12).where(eq(scratchG12.id, newId))
+  res.status(201).json({ data: row })
+})
+
+// ── 评估方法底稿文件确认 ─────────────────────────────────────────────────────
+
+// GET /api/scratch/estimation-methods/:projectId/:stage
+router.get('/estimation-methods/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [row] = await db.select().from(scratchEstimationMethods)
+    .where(and(eq(scratchEstimationMethods.projectId, projectId), eq(scratchEstimationMethods.stage, stage)))
+  res.json({ data: row || null })
+})
+
+// PUT /api/scratch/estimation-methods/:projectId/:stage
+router.put('/estimation-methods/:projectId/:stage', async (req, res) => {
+  const { projectId, stage } = req.params
+  const [existing] = await db.select().from(scratchEstimationMethods)
+    .where(and(eq(scratchEstimationMethods.projectId, projectId), eq(scratchEstimationMethods.stage, stage)))
+
+  const body = req.body
+  const fields = {
+    selectedMethods: JSON.stringify(body.selectedMethods || []),
+    checksAssetBase: JSON.stringify(body.checksAssetBase || []),
+    checksIncome:    JSON.stringify(body.checksIncome    || []),
+    checksMarket:    JSON.stringify(body.checksMarket    || []),
+    updatedAt:       now(),
+  }
+  if (existing) {
+    await db.update(scratchEstimationMethods).set(fields).where(eq(scratchEstimationMethods.id, existing.id))
+    const [row] = await db.select().from(scratchEstimationMethods).where(eq(scratchEstimationMethods.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchEstimationMethods).values({ ...fields, id: newId, projectId, stage })
+  const [row] = await db.select().from(scratchEstimationMethods).where(eq(scratchEstimationMethods.id, newId))
   res.status(201).json({ data: row })
 })
 

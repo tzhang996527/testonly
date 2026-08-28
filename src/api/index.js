@@ -169,6 +169,8 @@ export const scratchApi = {
   saveG11:  (projectId, stage, data) => http.put(`/scratch/g11/${projectId}/${stage}`, data).then(r => r.data),
   getG12:   (projectId, stage) => http.get(`/scratch/g12/${projectId}/${stage}`).then(r => r.data),
   saveG12:  (projectId, stage, data) => http.put(`/scratch/g12/${projectId}/${stage}`, data).then(r => r.data),
+  getEstimationMethods:  (projectId, stage) => http.get(`/scratch/estimation-methods/${projectId}/${stage}`).then(r => r.data),
+  saveEstimationMethods: (projectId, stage, data) => http.put(`/scratch/estimation-methods/${projectId}/${stage}`, data).then(r => r.data),
 }
 
 // ── Work Log ──────────────────────────────────────────────────

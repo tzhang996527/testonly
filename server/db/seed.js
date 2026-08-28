@@ -762,6 +762,17 @@ CREATE TABLE IF NOT EXISTS scratch_g12 (
   deliver_date TEXT DEFAULT '',
   updated_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS scratch_estimation_methods (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'estimation',
+  selected_methods TEXT DEFAULT '[]',
+  checks_asset_base TEXT DEFAULT '[]',
+  checks_income TEXT DEFAULT '[]',
+  checks_market TEXT DEFAULT '[]',
+  updated_at TEXT
+);
 `)
 
 console.log('✅ Seed complete')
