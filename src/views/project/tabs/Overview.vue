@@ -12,7 +12,15 @@
               "
             >
               <span>基本信息</span>
-              <div v-if="isDraft">
+              <div style="display: flex; gap: 8px; align-items: center">
+                <el-button
+                  size="small"
+                  :icon="Printer"
+                  :loading="exporting"
+                  @click="exportCurrent"
+                  >导出打印</el-button
+                >
+                <div v-if="isDraft">
                 <template v-if="!editing">
                   <PermGuard
                     :perm="PERM.PROJECT_EDIT"
@@ -50,10 +58,11 @@
                   </PermGuard>
                   <el-button size="small" @click="cancelEdit">取消</el-button>
                 </template>
+                </div>
               </div>
             </div>
           </template>
-          <el-tabs type="border-card" class="scratch-tabs" model-value="g1">
+          <el-tabs type="border-card" class="scratch-tabs" v-model="activeTab">
             <!-- G-1 评估业务基本事项调查表 -->
             <el-tab-pane label="G-1 基本事项调查表" name="g1">
               <div class="form-sheet">
@@ -746,7 +755,8 @@ import { ref, computed, reactive, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
-import { Edit, Upload } from "@element-plus/icons-vue";
+import { Edit, Upload, Printer } from "@element-plus/icons-vue";
+import { exportG1, exportG2, exportG28 } from "@/utils/exportOverview.js";
 import { useProjectStore } from "@/stores/project.js";
 import { documentApi, configApi, scratchApi } from "@/api/index.js";
 import StatusTag from "@/components/common/StatusTag.vue";
@@ -764,6 +774,7 @@ const isDraft = computed(() => project.value?.status === "draft");
 const stageApprovals = computed(
   () => project.value?.approvalsByStage?.["overview"] || [],
 );
+const activeTab = ref("g1");
 const editing = ref(false);
 const saving = ref(false);
 const pendingDeletes = ref([]);
@@ -791,6 +802,19 @@ const editForm = reactive({
   remark: "",
   budgetHours: 0,
 });
+
+const exporting = ref(false);
+
+async function exportCurrent() {
+  exporting.value = true;
+  try {
+    if (activeTab.value === "g1") await exportG1(g1);
+    else if (activeTab.value === "g2") await exportG2(g2);
+    else if (activeTab.value === "g28") await exportG28(g28, G28_QUESTIONS);
+  } finally {
+    exporting.value = false;
+  }
+}
 
 async function startEdit() {
   const p = project.value;

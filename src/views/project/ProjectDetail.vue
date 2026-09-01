@@ -58,19 +58,24 @@ const advancing = ref(false)
 
 // tab[i] requires currentStep >= i; overview (i=0) is always visible
 const allTabs = [
+  { label: '基本信息', name: 'basic-info' },
   { label: '项目概览', name: 'overview' },
-  { label: '前期工作', name: 'pre-work' },
-  { label: '清查盘点', name: 'inventory' },
-  { label: '资料收集', name: 'collection' },
-  { label: '评定估算', name: 'estimation' },
-  { label: '内部审核', name: 'review' },
-  { label: '结果确认', name: 'confirmation' },
-  { label: '报告归档', name: 'archive' },
-  { label: '后续跟踪', name: 'tracking' },
+  { label: '前期工作', name: 'pre-work',     minStep: 2 },
+  { label: '清查盘点', name: 'inventory',    minStep: 3 },
+  { label: '资料收集', name: 'collection',   minStep: 4 },
+  { label: '评定估算', name: 'estimation',   minStep: 5 },
+  { label: '内部审核', name: 'review',       minStep: 6 },
+  { label: '结果确认', name: 'confirmation', minStep: 7 },
+  { label: '报告归档', name: 'archive',      minStep: 8 },
+  { label: '后续跟踪', name: 'tracking',     minStep: 9 },
   { label: '变更记录', name: 'change-history' },
 ]
+const ALWAYS_VISIBLE = new Set(['basic-info', 'overview', 'change-history'])
 const visibleTabs = computed(() =>
-  allTabs.filter((tab, i) => tab.name === 'change-history' || (project.value?.currentStep || 1) > i)
+  allTabs.filter(tab =>
+    ALWAYS_VISIBLE.has(tab.name) ||
+    (project.value?.currentStep || 1) >= (tab.minStep ?? 1)
+  )
 )
 const tabRouteMap = allTabs.map(t => t.name)
 const activeTab = ref(route.path.split('/').at(-1) || 'overview')
@@ -132,7 +137,7 @@ async function handleAdvance() {
   try {
     const updated = await projectStore.advanceStep(route.params.id)
     ElMessage.success('流程已推进')
-    const nextTab = allTabs[updated.currentStep - 1]?.name
+    const nextTab = allTabs.find(t => t.minStep === updated.currentStep)?.name || 'overview'
     if (nextTab) {
       await nextTick()
       activeTab.value = nextTab
@@ -145,7 +150,8 @@ async function handleAdvance() {
 
 onMounted(async () => {
   await projectStore.fetchOne(route.params.id)
-  const currentTab = allTabs[(project.value?.currentStep || 1) - 1]?.name || 'overview'
+  const step = project.value?.currentStep || 1
+  const currentTab = allTabs.find(t => t.minStep === step)?.name || 'overview'
   await nextTick()
   activeTab.value = currentTab
   router.replace(`/project/${route.params.id}/${currentTab}`)

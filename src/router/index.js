@@ -36,6 +36,7 @@ const routes = [
           { path: 'confirmation', name: 'Confirmation',    component: () => import('@/views/project/tabs/Confirmation.vue') },
           { path: 'archive',      name: 'Archive',         component: () => import('@/views/project/tabs/Archive.vue') },
           { path: 'tracking',        name: 'Tracking',       component: () => import('@/views/project/tabs/Tracking.vue') },
+          { path: 'basic-info',      name: 'BasicInfo',      component: () => import('@/views/project/tabs/BasicInfo.vue') },
           { path: 'change-history',  name: 'ChangeHistory',  component: () => import('@/views/project/tabs/ChangeHistory.vue') },
         ],
       },
