@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { randomUUID } from 'crypto'
 import { db } from '../db/index.js'
-import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5, scratchG27, scratchC3, scratchG10, scratchG11, scratchG12, scratchEstimationMethods } from '../db/schema.js'
+import { scratchG1, scratchG2, scratchG28, scratchG4, scratchG5, scratchG27, scratchC3, scratchG10, scratchG11, scratchG12, scratchEstimationMethods, scratchInvSheet } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 
 const router = Router()
@@ -374,6 +374,44 @@ router.put('/estimation-methods/:projectId/:stage', async (req, res) => {
   const newId = randomUUID()
   await db.insert(scratchEstimationMethods).values({ ...fields, id: newId, projectId, stage })
   const [row] = await db.select().from(scratchEstimationMethods).where(eq(scratchEstimationMethods.id, newId))
+  res.status(201).json({ data: row })
+})
+
+// ── 存货底稿表（通用，按 formKey 存 JSON）─────────────────────────────────────
+
+// GET /api/scratch/inv-sheet/:projectId/:stage/:formKey
+router.get('/inv-sheet/:projectId/:stage/:formKey', async (req, res) => {
+  const { projectId, stage, formKey } = req.params
+  const [row] = await db.select().from(scratchInvSheet)
+    .where(and(
+      eq(scratchInvSheet.projectId, projectId),
+      eq(scratchInvSheet.stage, stage),
+      eq(scratchInvSheet.formKey, formKey),
+    ))
+  res.json({ data: row || null })
+})
+
+// PUT /api/scratch/inv-sheet/:projectId/:stage/:formKey
+router.put('/inv-sheet/:projectId/:stage/:formKey', async (req, res) => {
+  const { projectId, stage, formKey } = req.params
+  const [existing] = await db.select().from(scratchInvSheet)
+    .where(and(
+      eq(scratchInvSheet.projectId, projectId),
+      eq(scratchInvSheet.stage, stage),
+      eq(scratchInvSheet.formKey, formKey),
+    ))
+
+  const payload = JSON.stringify(req.body ?? {})
+  if (existing) {
+    await db.update(scratchInvSheet)
+      .set({ payload, updatedAt: now() })
+      .where(eq(scratchInvSheet.id, existing.id))
+    const [row] = await db.select().from(scratchInvSheet).where(eq(scratchInvSheet.id, existing.id))
+    return res.json({ data: row })
+  }
+  const newId = randomUUID()
+  await db.insert(scratchInvSheet).values({ id: newId, projectId, stage, formKey, payload, updatedAt: now() })
+  const [row] = await db.select().from(scratchInvSheet).where(eq(scratchInvSheet.id, newId))
   res.status(201).json({ data: row })
 })
 

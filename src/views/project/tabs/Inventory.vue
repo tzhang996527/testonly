@@ -4,7 +4,12 @@
       <el-col :span="14">
     <!-- 底稿表单（G-27 / C3-1-1/2） -->
     <el-card shadow="never" style="margin-top:16px" class="scratch-tabs-card">
-      <el-tabs type="border-card" class="scratch-tabs" model-value="g27">
+      <el-tabs
+        type="border-card"
+        class="scratch-tabs"
+        model-value="g27"
+        @tab-change="loadInvSheet"
+      >
         <el-tab-pane label="G-27 现场勘查记录表" name="g27">
           <div class="form-sheet">
         <table class="form-table">
@@ -465,6 +470,23 @@
             </div>
           </div>
         </el-tab-pane>
+
+        <!-- 存货底稿表（basic 2022.xlsx 各 tab） -->
+        <el-tab-pane
+          v-for="s in INVENTORY_SHEETS"
+          :key="s.key"
+          :label="s.tab"
+          :name="s.key"
+          lazy
+        >
+          <InventorySheet
+            v-model="invPayloads[s.key]"
+            :config="s"
+            :locked="locked"
+            :saving="!!invSaving[s.key]"
+            @save="saveInvSheet(s.key)"
+          />
+        </el-tab-pane>
       </el-tabs>
     </el-card>
 
@@ -534,6 +556,8 @@ import { useProjectStore } from '@/stores/project.js'
 import ApprovalFlowCard from '@/components/common/ApprovalFlowCard.vue'
 import PermGuard from '@/components/common/PermGuard.vue'
 import { PERM } from '@/constants/permissions.js'
+import InventorySheet from './InventorySheet.vue'
+import { INVENTORY_SHEETS } from './inventorySheets.js'
 
 const route = useRoute()
 const saving = ref(false)
@@ -741,6 +765,37 @@ async function saveInventory() {
     ElMessage.success('盘点信息已保存')
   } finally {
     saving.value = false
+  }
+}
+
+// ── 存货底稿表（通用，按 formKey 存 JSON）───────────────────────────────────────
+const invPayloads = reactive({})
+const invSaving = reactive({})
+const invLoaded = reactive({})
+const invSheetKeys = new Set(INVENTORY_SHEETS.map((s) => s.key))
+INVENTORY_SHEETS.forEach((s) => { invPayloads[s.key] = {} })
+
+// 与 G-27 / C3-1-1/2 共用一个 el-tabs，切到非存货底稿表时直接跳过
+async function loadInvSheet(key) {
+  if (!invSheetKeys.has(key) || invLoaded[key]) return
+  invLoaded[key] = true
+  try {
+    const { data } = await scratchApi.getInvSheet(route.params.id, 'inventory', key)
+    if (data?.payload) invPayloads[key] = JSON.parse(data.payload)
+  } catch {
+    invLoaded[key] = false
+  }
+}
+
+async function saveInvSheet(key) {
+  invSaving[key] = true
+  try {
+    await scratchApi.saveInvSheet(route.params.id, 'inventory', key, invPayloads[key] || {})
+    ElMessage.success('已保存')
+  } catch {
+    ElMessage.error('保存失败')
+  } finally {
+    invSaving[key] = false
   }
 }
 

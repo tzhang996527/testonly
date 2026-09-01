@@ -522,6 +522,16 @@ export const scratchG12 = sqliteTable('scratch_g12', {
   updatedAt:              text('updated_at'),
 })
 
+// 存货底稿表（通用）：一行 = 一个 project + stage + formKey，payload 存整表 JSON
+export const scratchInvSheet = sqliteTable('scratch_inv_sheet', {
+  id:        text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  stage:     text('stage').notNull().default('inventory'),
+  formKey:   text('form_key').notNull(),                 // e.g. 'c3_10_1_1'
+  payload:   text('payload').default('{}'),              // JSON 字符串
+  updatedAt: text('updated_at'),
+})
+
 // 评估方法底稿文件确认 (one row per project+stage)
 export const scratchEstimationMethods = sqliteTable('scratch_estimation_methods', {
   id:              text('id').primaryKey(),

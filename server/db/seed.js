@@ -773,6 +773,17 @@ CREATE TABLE IF NOT EXISTS scratch_estimation_methods (
   checks_market TEXT DEFAULT '[]',
   updated_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS scratch_inv_sheet (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  stage TEXT NOT NULL DEFAULT 'inventory',
+  form_key TEXT NOT NULL,
+  payload TEXT DEFAULT '{}',
+  updated_at TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_scratch_inv_sheet_unique
+  ON scratch_inv_sheet (project_id, stage, form_key);
 `)
 
 console.log('✅ Seed complete')

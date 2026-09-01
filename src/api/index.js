@@ -171,6 +171,10 @@ export const scratchApi = {
   saveG12:  (projectId, stage, data) => http.put(`/scratch/g12/${projectId}/${stage}`, data).then(r => r.data),
   getEstimationMethods:  (projectId, stage) => http.get(`/scratch/estimation-methods/${projectId}/${stage}`).then(r => r.data),
   saveEstimationMethods: (projectId, stage, data) => http.put(`/scratch/estimation-methods/${projectId}/${stage}`, data).then(r => r.data),
+
+  // 存货底稿表（通用，按 formKey 存 JSON）
+  getInvSheet:  (projectId, stage, key)       => http.get(`/scratch/inv-sheet/${projectId}/${stage}/${key}`).then(r => r.data),
+  saveInvSheet: (projectId, stage, key, data) => http.put(`/scratch/inv-sheet/${projectId}/${stage}/${key}`, data).then(r => r.data),
 }
 
 // ── Work Log ──────────────────────────────────────────────────
