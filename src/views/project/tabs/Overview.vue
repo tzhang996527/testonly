@@ -22,6 +22,7 @@
                 >
                 <div v-if="isDraft">
                 <template v-if="!editing">
+                  <el-button size="small" type="warning">提交审批</el-button>
                   <PermGuard
                     :perm="PERM.PROJECT_EDIT"
                     mode="disable"
