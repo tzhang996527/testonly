@@ -34,17 +34,22 @@
     </table>
 
     <!-- ── 明细表 / 作业分析表 ── -->
-    <table v-if="config.kind === 'detail'" class="form-table sheet-grid" style="margin-top: 8px">
+    <div v-if="config.kind === 'detail'" class="grid-scroll">
+    <table class="form-table sheet-grid">
       <colgroup>
         <col v-for="(lc, i) in leaves" :key="i" :style="lc.width ? { width: lc.width + 'px' } : null" />
         <col style="width: 52px" />
       </colgroup>
       <thead>
         <tr>
-          <template v-for="(c, i) in config.cols" :key="'h1-' + i">
-            <th v-if="Array.isArray(c)" class="label-cell" rowspan="2">{{ c[0] }}</th>
-            <th v-else class="label-cell" :colspan="c.c.length">{{ c.g }}</th>
-          </template>
+          <th
+            v-for="(h, i) in headerRow1"
+            :key="'h1-' + i"
+            class="label-cell"
+            :rowspan="h.leaf ? 2 : 1"
+            :colspan="h.colspan || 1"
+            v-bind="h.leaf ? stickyBind(h.leafIndex) : {}"
+          >{{ h.label }}</th>
           <th class="label-cell" rowspan="2">操作</th>
         </tr>
         <tr>
@@ -57,7 +62,12 @@
       </thead>
       <tbody>
         <tr v-for="(row, ri) in state.rows" :key="ri">
-          <td v-for="(lc, ci) in leaves" :key="ci" :class="{ 'no-cell': lc.field === 'no' }">
+          <td
+            v-for="(lc, ci) in leaves"
+            :key="ci"
+            v-bind="stickyBind(ci)"
+            :class="{ 'no-cell': lc.field === 'no' }"
+          >
             <span v-if="lc.field === 'no'">{{ ri + 1 }}</span>
             <input v-else v-model="row[lc.field]" class="cell-input" :disabled="locked" />
           </td>
@@ -77,12 +87,16 @@
           </td>
         </tr>
         <tr v-for="label in config.summary" :key="label">
-          <td class="label-cell" :colspan="summarySpan">{{ label }}</td>
+          <td class="label-cell" :colspan="summarySpan" v-bind="stickyBind(0)">{{ label }}</td>
           <template v-for="(lc, ci) in leaves.slice(summarySpan)" :key="ci">
-            <td v-if="sumFields.includes(lc.field)" class="sum-cell">
+            <td
+              v-if="sumFields.includes(lc.field)"
+              class="sum-cell"
+              v-bind="stickyBind(summarySpan + ci)"
+            >
               {{ state.summary[label][lc.field] }}
             </td>
-            <td v-else>
+            <td v-else v-bind="stickyBind(summarySpan + ci)">
               <input v-model="state.summary[label][lc.field]" class="cell-input" :disabled="locked" />
             </td>
           </template>
@@ -96,9 +110,11 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <!-- ── 汇总表 ── -->
-    <table v-else-if="config.kind === 'summary'" class="form-table sheet-grid" style="margin-top: 8px">
+    <div v-else-if="config.kind === 'summary'" class="grid-scroll">
+    <table class="form-table sheet-grid">
       <colgroup>
         <col style="width: 200px" />
         <col v-for="(lc, i) in leaves" :key="i" :style="lc.width ? { width: lc.width + 'px' } : null" />
@@ -124,6 +140,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <!-- ── 评估步骤及复核表 ── -->
     <table v-else-if="config.kind === 'review'" class="form-table" style="margin-top: 8px">
@@ -217,6 +234,48 @@ const sumFields = computed(() => {
   return leaves.value
     .filter((f) => /Amt$/.test(f.field) || f.field === 'bookValue' || f.field === 'evalValue')
     .map((f) => f.field)
+})
+
+// ── 左侧列冻结（横向滚动时保持可见）──────────────────────────────
+// 默认冻结前 2 列（序号 + 名称），可用 config.stickyCols 覆盖
+const stickyCount = computed(() =>
+  props.config.kind === 'detail'
+    ? Math.min(props.config.stickyCols ?? 2, leaves.value.length)
+    : 0,
+)
+const stickyLeft = computed(() => {
+  const arr = []
+  let acc = 0
+  for (const lc of leaves.value) {
+    arr.push(acc)
+    acc += Number(lc.width) || 90
+  }
+  return arr
+})
+function stickyBind(leafIndex) {
+  if (leafIndex < 0 || leafIndex >= stickyCount.value) return {}
+  return {
+    class:
+      leafIndex === stickyCount.value - 1
+        ? ['sticky-col', 'sticky-col-last']
+        : ['sticky-col'],
+    style: { left: (stickyLeft.value[leafIndex] || 0) + 'px' },
+  }
+}
+// 表头首行：叶子列携带 leafIndex，分组列携带 colspan
+const headerRow1 = computed(() => {
+  const out = []
+  let leafIndex = 0
+  for (const c of props.config.cols || []) {
+    if (Array.isArray(c)) {
+      out.push({ leaf: true, label: c[0], leafIndex })
+      leafIndex += 1
+    } else {
+      out.push({ leaf: false, label: c.g, colspan: c.c.length })
+      leafIndex += c.c.length
+    }
+  }
+  return out
 })
 
 function computeSum(field) {
@@ -330,7 +389,11 @@ watch(
   padding: 12px 16px 16px;
   font-family: "SimSun", "Microsoft YaHei", sans-serif;
   font-size: 13px;
+}
+/* 只有数据表格区域横向滚动，抬头 / 基本信息 / 页脚保持不动 */
+.grid-scroll {
   overflow-x: auto;
+  margin-top: 8px;
 }
 .form-table {
   width: 100%;
@@ -386,6 +449,26 @@ watch(
   background: #f4f7fb;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+/* 左侧冻结列 */
+.sticky-col {
+  position: sticky;
+  z-index: 2;
+  background: #fff;
+  border-right: 1px solid #bcc8d4;
+}
+.label-cell.sticky-col {
+  background: #dce6f0;
+  z-index: 3;
+}
+.no-cell.sticky-col {
+  background: #f7f9fb;
+}
+.sum-cell.sticky-col {
+  background: #f4f7fb;
+}
+.sticky-col-last {
+  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.25);
 }
 .disclosure-cell {
   font-size: 12px;
