@@ -37,6 +37,7 @@
     <table v-if="config.kind === 'detail'" class="form-table sheet-grid" style="margin-top: 8px">
       <colgroup>
         <col v-for="(lc, i) in leaves" :key="i" :style="lc.width ? { width: lc.width + 'px' } : null" />
+        <col style="width: 52px" />
       </colgroup>
       <thead>
         <tr>
@@ -44,6 +45,7 @@
             <th v-if="Array.isArray(c)" class="label-cell" rowspan="2">{{ c[0] }}</th>
             <th v-else class="label-cell" :colspan="c.c.length">{{ c.g }}</th>
           </template>
+          <th class="label-cell" rowspan="2">操作</th>
         </tr>
         <tr>
           <template v-for="(c, i) in config.cols" :key="'h2-' + i">
@@ -55,18 +57,39 @@
       </thead>
       <tbody>
         <tr v-for="(row, ri) in state.rows" :key="ri">
-          <td v-for="(lc, ci) in leaves" :key="ci">
-            <input v-model="row[lc.field]" class="cell-input" :disabled="locked" />
+          <td v-for="(lc, ci) in leaves" :key="ci" :class="{ 'no-cell': lc.field === 'no' }">
+            <span v-if="lc.field === 'no'">{{ ri + 1 }}</span>
+            <input v-else v-model="row[lc.field]" class="cell-input" :disabled="locked" />
+          </td>
+          <td class="action-cell">
+            <el-button
+              v-if="!locked"
+              link
+              type="danger"
+              size="small"
+              @click="removeRow(ri)"
+            >删除</el-button>
+          </td>
+        </tr>
+        <tr v-if="!locked">
+          <td :colspan="leaves.length + 1" class="addrow-cell">
+            <el-button link type="primary" size="small" @click="addRow">＋ 添加行</el-button>
           </td>
         </tr>
         <tr v-for="label in config.summary" :key="label">
           <td class="label-cell" :colspan="summarySpan">{{ label }}</td>
-          <td v-for="(lc, ci) in leaves.slice(summarySpan)" :key="ci">
-            <input v-model="state.summary[label][lc.field]" class="cell-input" :disabled="locked" />
-          </td>
+          <template v-for="(lc, ci) in leaves.slice(summarySpan)" :key="ci">
+            <td v-if="sumFields.includes(lc.field)" class="sum-cell">
+              {{ state.summary[label][lc.field] }}
+            </td>
+            <td v-else>
+              <input v-model="state.summary[label][lc.field]" class="cell-input" :disabled="locked" />
+            </td>
+          </template>
+          <td class="action-cell"></td>
         </tr>
         <tr>
-          <td :colspan="leaves.length" class="disclosure-cell">
+          <td :colspan="leaves.length + 1" class="disclosure-cell">
             {{ config.disclosureLabel || '披露及调整事项说明：' }}
             <textarea v-model="state.disclosure" class="cell-textarea" rows="2" :disabled="locked" />
           </td>
@@ -188,6 +211,35 @@ const footerFields = computed(
   () => props.config.footerFields || [['清查日期', 'checkDate', 'date'], ['评估人员', 'appraiser'], ['复核人', 'reviewer']],
 )
 
+// 需要自动求和的列（账面价值 / 评估价值 等金额列）
+const sumFields = computed(() => {
+  if (Array.isArray(props.config.sumFields)) return props.config.sumFields
+  return leaves.value
+    .filter((f) => /Amt$/.test(f.field) || f.field === 'bookValue' || f.field === 'evalValue')
+    .map((f) => f.field)
+})
+
+function computeSum(field) {
+  let seen = false
+  let sum = 0
+  for (const r of state.rows) {
+    const n = parseFloat(r[field])
+    if (Number.isFinite(n)) {
+      seen = true
+      sum += n
+    }
+  }
+  return seen ? Math.round(sum * 100) / 100 : ''
+}
+
+function addRow() {
+  state.rows.push(blankRow())
+}
+function removeRow(i) {
+  state.rows.splice(i, 1)
+  if (!state.rows.length) state.rows.push(blankRow())
+}
+
 function blankRow() {
   const o = {}
   leaves.value.forEach((lc) => { o[lc.field] = '' })
@@ -206,8 +258,10 @@ function buildState() {
   footerFields.value.forEach((f) => { s[f[1]] = src[f[1]] || '' })
 
   if (props.config.kind === 'detail') {
-    const saved = Array.isArray(src.rows) ? src.rows : []
-    s.rows = Array.from({ length: props.config.rows }, (_, i) => ({ ...blankRow(), ...(saved[i] || {}) }))
+    const saved = Array.isArray(src.rows) && src.rows.length ? src.rows : null
+    s.rows = saved
+      ? saved.map((r) => ({ ...blankRow(), ...r }))
+      : Array.from({ length: Math.max(props.config.rows || 1, 1) }, () => blankRow())
     s.summary = {}
     ;(props.config.summary || []).forEach((label) => {
       s.summary[label] = { ...blankRow(), ...((src.summary && src.summary[label]) || {}) }
@@ -241,6 +295,22 @@ watch(
     Object.assign(state, buildState())
     nextTick(() => { applying = false })
   },
+)
+
+// 自动小计 / 合计：sumFields 各列 = 所有数据行之和；合计 = 小计
+watch(
+  () => JSON.stringify(state.rows),
+  () => {
+    if (props.config.kind !== 'detail' || !state.summary) return
+    for (const label of props.config.summary || []) {
+      if (!state.summary[label]) continue
+      for (const f of sumFields.value) {
+        const v = computeSum(f)
+        if (state.summary[label][f] !== v) state.summary[label][f] = v
+      }
+    }
+  },
+  { immediate: true },
 )
 
 // 本地编辑同步回父组件
@@ -293,6 +363,29 @@ watch(
 }
 .check-cell {
   text-align: center;
+}
+.no-cell {
+  text-align: center;
+  font-size: 12px;
+  color: #595959;
+  background: #f7f9fb;
+}
+.action-cell {
+  text-align: center;
+  padding: 2px;
+}
+.addrow-cell {
+  text-align: center;
+  padding: 4px;
+  background: #fafafa;
+}
+.sum-cell {
+  text-align: right;
+  font-size: 12px;
+  padding: 3px 6px;
+  background: #f4f7fb;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .disclosure-cell {
   font-size: 12px;

@@ -6,9 +6,15 @@
 //   分组列  { g: '组名', c: [ 叶子列, ... ] }
 //
 // kind:
-//   'detail'  明细表 / 作业分析表：两级表头 + 空白数据行 + 小计/合计 + 披露说明 + 页脚
+//   'detail'  明细表 / 作业分析表：两级表头 + 可增删数据行 + 小计/合计 + 披露说明 + 页脚
 //   'summary' 汇总表：固定行标签 + 数值列
 //   'review'  评估步骤及复核表：步骤清单 + 是/不适用 勾选 + 说明与备注
+//
+// detail 表说明：
+//   · 字段名为 'no' 的列自动按行号显示（不可编辑）
+//   · 数据行可「＋添加行」「删除」，行数不固定，rows 仅为初始空行数
+//   · sumFields：需要自动求和的金额列，小计 = 所有数据行之和，合计 = 小计（只读）
+//     不填时自动取字段名以 Amt 结尾或为 bookValue / evalValue 的列
 
 const COMPANY = '上海城乡资产评估有限责任公司'
 const COMPANY_EN = 'SHANGHAI URBAN & RURAL ASSETS APPRAISAL CO.,LTD'
@@ -57,6 +63,7 @@ export const INVENTORY_SHEETS = [
     companyEn: COMPANY_EN,
     kind: 'detail',
     summarySpan: 1,
+    sumFields: ['bookValue', 'evalValue'],
     cols: [
       ['序号', 'no', 44],
       ['名称及内容', 'name', 140],
