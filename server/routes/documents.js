@@ -7,9 +7,9 @@ import { fileURLToPath } from 'url'
 import { db } from '../db/index.js'
 import { documents } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
+import { UPLOADS_DIR } from '../config/paths.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const UPLOADS_DIR = path.join(__dirname, '../../uploads')
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOADS_DIR),

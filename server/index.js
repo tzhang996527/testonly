@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import projectsRouter    from './routes/projects.js'
@@ -17,6 +18,7 @@ import worklogRouter     from './routes/worklog.js'
 import expertsRouter     from './routes/experts.js'
 import scratchRouter     from './routes/scratch.js'
 import { authMiddleware } from './middleware/auth.js'
+import { UPLOADS_DIR } from './config/paths.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -27,7 +29,22 @@ app.use(cors())
 app.use(express.json())
 
 // serve uploaded files as static assets
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+app.use('/uploads', express.static(UPLOADS_DIR))
+
+// 生产环境：托管 Vite 打包后的前端 (dist/)。静态资源与 SPA 回退必须放在
+// authMiddleware 之前，否则会被鉴权拦截返回 401。
+// Express 5 不支持 app.get('*')，改用中间件按需返回 index.html。
+const DIST_DIR = path.join(__dirname, '../dist')
+const hasFrontend = fs.existsSync(path.join(DIST_DIR, 'index.html'))
+if (hasFrontend) {
+  app.use(express.static(DIST_DIR))
+  // SPA 回退：非 /api、非 /uploads 的 GET 请求返回前端入口，支持前端路由刷新/深链接。
+  app.use((req, res, next) => {
+    if (req.method !== 'GET') return next()
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next()
+    res.sendFile(path.join(DIST_DIR, 'index.html'))
+  })
+}
 
 // public routes (no auth required)
 app.get('/api/health', (req, res) => res.json({ ok: true }))

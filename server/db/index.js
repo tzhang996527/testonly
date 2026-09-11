@@ -1,11 +1,7 @@
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema.js'
-import { fileURLToPath } from 'url'
-import path from 'path'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DB_PATH = path.join(__dirname, '../../erp.db')
+import { DB_PATH } from '../config/paths.js'
 
 const sqlite = new Database(DB_PATH)
 sqlite.pragma('journal_mode = WAL')
@@ -15,6 +11,8 @@ function migrate() {
   const existing = new Set(
     sqlite.prepare('PRAGMA table_info(projects)').all().map(c => c.name)
   )
+  // 全新数据库（Volume 首次挂载）此时还没有任何表——交给 seed 创建，这里直接跳过。
+  if (existing.size === 0) return
   const cols = [
     ['contract_no',             'TEXT DEFAULT ""'],
     ['report_date',             'TEXT DEFAULT ""'],
